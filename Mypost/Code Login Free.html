@@ -1,0 +1,1632 @@
+<div class="post-title">Code Login Free</div>
+<div class="post-date">2024/Agustus/23</div>
+<div class="post-author">Hirutshuji</div>
+<div class="post-content">
+
+<div class="image-article">
+<img alt="form login v4.0" class="card-img-top" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgXoSm8dVj5T2GWz4vEzSjQli9bQ5BsChWgNrHoxYHCzUudvSn49lRkEbANHkaF7P_Ocnc4ltTug69QOEbk5YQwiz1uAuQR-VTfJcV5IbVfDLr5fkyEWWLZR_JOp09-yZLgjoSNoNY_iDg9NK3tEVjM_X0IZMh3oAFE635eKVJjUfdtiZip0ZBrmd8_-nDw/s1600/Photo_1710865739504.png" type="image/webp" />
+</div>
+<br />
+<br />
+<div class="alert alert-primary" role="alert">Nanti kubikin gak manual dalam memanggil kontentnya, rencana bakal pakai label, jadi kontent asli tetap ada diblogger tanpa kelihatan, sedangkan kontent yang sudah diupload ke database yang diambil dan digunakan.</div>
+
+<h4><b>#Version 4.0</b></h4>
+<div><b>Apa yang baru ?</b></div>
+<div>
+  <b><br /></b>
+</div>
+<div><b>- lock pakai database.</b></div>
+<div><b>- player video(coming soon).&nbsp;</b></div>
+<div><b>- new style.</b></div>
+<div><b>- tidak lagi popup.</b></div>
+<div>
+  <b><br /></b>
+</div>
+<div><b>Apa yang dihapus ?</b></div>
+<div><b>- lock encrypt&nbsp;</b></div>
+<div><b>- Role Staff,Modder&nbsp;</b></div>
+<div><b>- form login popup</b></div>
+<div><b>- encrypt label</b></div>
+<div><b>&nbsp;</b></div>
+<hr/>
+<p>Catatan:</p>
+<br/>
+<p>Kode ini direlease agar ada tujuan untuk pengembangan versi premium, sekaligus sebagai test kode premium yang perlu disempurnakan.</p>
+<hr/>
+ 
+<b>check Demo: tidak tersedia</b>      
+<!--video player-->
+<div id="kaurukavideo">
+  <div class="lazy-v" data-embed="" style="z-index: 1;">
+    <div class="play">
+      <span></span>
+    </div>
+  <img alt="Video Thumbnail" class="thumb-v" onerror="this.src='fallback-img.jpg'" src="" />
+  </div>
+  <div class="servideo">
+    <span class="change-video c-aktif" data-embed="https://youtube.com/embed/5wOTJdY3Pio?si=GUIPHSJcsoy_nkl6">Cara Post</span>
+    <span class="change-video c-aktif" data-embed="https://youtube.com/embed/idyt">Demo(tidak tersedia)</span> 
+  </div>
+</div>
+<hr/>
+<h4>Config SDK Firebase</h4>
+<p>Letakan dibawah head</p>
+<p>jangan lupa pasang config sdk milik kamu didalam kode ini</p>
+<pre><code class="html">
+&lt;script src=&#039;https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js&#039;/&gt;
+  &lt;script src=&#039;https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js&#039;/&gt;
+  &lt;script src=&#039;https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js&#039;/&gt;
+  &lt;script src=&#039;https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js&#039;/&gt;
+  &lt;script src=&#039;https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js&#039;/&gt;
+  &lt;script&gt;
+    /*&lt;![CDATA[*/
+    const config2 = {
+       config sdk kamu  disini 
+       
+    };
+    firebase.initializeApp(config2);
+    const dbrl = firebase.database();
+    const auth = firebase.auth();
+    const storagedb = firebase.storage();
+    const db = firebase.firestore();
+/*]]&gt;*/
+   &lt;/script&gt;
+</code></pre>
+<h4>Rule Firebase</h4>
+<b>Firestore</b>
+<pre><code class="html">
+rules_version = &#039;2&#039;;
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Izinkan pencarian email
+    match /users/{userId} {
+      allow read: if request.auth == null || resource.data.email == request.auth.token.email;
+      allow create, update, delete: if request.auth != null &amp;&amp; request.auth.uid == userId;
+      
+      // Izinkan akses ke semua field dalam dokumen users setelah login
+      match /users/{userId} {
+        allow read, write: if request.auth != null &amp;&amp; request.auth.uid == userId;
+      }
+    }
+
+  match /profiles_publik/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null &amp;&amp; (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [&#039;User&#039;, &#039;Member&#039;, &#039;Staff&#039;, &#039;Modder&#039;]);
+    }
+
+
+    // Pengecualian untuk pengguna dengan role &quot;Admin&quot; agar mendapat akses ke semua data
+    match /{document=**} {
+      allow read, write: if request.auth != null &amp;&amp; get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == &#039;Admin&#039;;
+    }
+  }
+}
+</code></pre>
+<b>Realtime database (Update: 17/08/2024 4:00PM)</b>
+<ul>Channge Log
+<li>Add Rule Kontent</li>
+<li>Fixed Rule Series</li>
+</ul>
+<pre><code class="html">
+{
+  &quot;rules&quot;: {
+    &quot;users&quot;: {
+      &quot;$uid&quot;: {
+        &quot;.read&quot;: &quot;auth != null &amp;&amp; auth.uid === $uid&quot;,
+        &quot;.write&quot;: &quot;auth != null &amp;&amp; auth.uid === $uid&quot;
+      }
+    },
+    
+&quot;riwayat_baca&quot;: {
+      &quot;$userId&quot;: {
+        &quot;.read&quot;: &quot;$userId === auth.uid&quot;,
+        &quot;.write&quot;: &quot;$userId === auth.uid&quot;,
+        &quot;$postId&quot;: {
+          &quot;.validate&quot;: &quot;newData.hasChildren([&#039;imgcover&#039;, &#039;title&#039;, &#039;url&#039;, &#039;initialtime&#039;,&#039;latesttimeread&#039;,&#039;count_read&#039;])&quot;
+        },
+        &quot;.indexOn&quot;: [&quot;initialtime&quot;]
+      }
+    },
+ &quot;kontent&quot;: {
+    &quot;.read&quot;: &quot;auth != null&quot;,
+    &quot;.write&quot;: &quot;auth != null&quot;
+   },   
+   &quot;series&quot;: {
+        &quot;.read&quot;: &quot;auth != null || !data.child(&#039;linksPremium&#039;).exists()&quot;,
+        &quot;.write&quot;: &quot;auth != null&quot;,
+        &quot;episodes&quot;: {
+          &quot;$episodeId&quot;: {
+            &quot;.read&quot;: &quot;auth != null || !data.child(&#039;linksPremium&#039;).exists()&quot;,
+            &quot;.write&quot;: &quot;auth != null&quot;
+          }
+        }
+    },
+    &quot;$other&quot;: {
+      &quot;.read&quot;: &quot;auth != null&quot;,
+      &quot;.write&quot;: &quot;root.child(&#039;users/&#039; + auth.uid + &#039;/role&#039;).val() == &#039;Admin&#039;&quot;
+    }
+  }
+}
+</code></pre>
+<b>Storage</b>
+<pre><code class="html">
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /profile_photos/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+</code></pre>
+<b>Login - register - profile - change password</b>
+<p>Ke empat kode ini harap letakan di halaman blog kalian, bebas kasih nama apa.</p>
+<b>Login</b>
+<pre><code class="html">
+&lt;style&gt;
+.btn_login,.frinput{font-size:16px;width:100%}.border-wrp,.notif{align-items:center}.loginHiru{background:#f4f4f4;padding:20px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.1);max-width:400px;width:100%;text-align:center}.login-form h3{font-size:24px;margin-bottom:20px;color:#333}.group_login{position:relative;margin-bottom:20px}.frinput{padding:10px 10px 10px 0;display:block;border:none;border-bottom:2px solid #333;background:0 0;color:#333;outline:0}.frinput::placeholder{color:#999}.group_login label{color:#333;font-size:14px;position:absolute;top:-20px;left:0}.bar_login{position:absolute;bottom:0;left:0;height:2px;width:100%;background:#333;transition:transform .3s;transform:scaleX(0)}.frinput:focus~.bar_login{transform:scaleX(1)}.icon_lock_pass_login{position:absolute;right:10px;top:10px;cursor:pointer}.btn_login{background-color:#000;color:#fff;padding:10px;border:none;border-radius:4px;cursor:pointer;transition:background-color .3s}.btn_login:hover{background-color:#333}.message{margin:15px 0 0;font-size:14px;color:#333}.message a{color:#000;text-decoration:none;font-weight:700}.border-wrp{display:flex;justify-content:center;margin:20px 0}.border-bts{height:1px;width:100%;background:#333}.spanor{padding:0 10px;font-weight:700;color:#333}.icon_lock_pass_login svg{width:24px;height:24px}.hiddeniconpass_login{display:none}@media (max-width:500px){.loginHiru{padding:15px}.login-form h3{font-size:20px}}.notif{position:fixed;top:20px;right:20px;background-color:#222;color:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.2);z-index:99999999;display:flex;transition:opacity .3s,visibility .3s}.notif.hiddeniconpass_login{opacity:0;visibility:hidden}.notif-content{display:flex;align-items:center}.notif-content h4{margin:0 10px;font-size:18px}.notif-content p{margin:0}.notif.success{border-left:4px solid #4caf50}.notif.error{border-left:4px solid #f44336}.notif.warning{border-left:4px solid #ff9800}#notifIcon{font-size:24px;margin-right:10px}@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes slideOutRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
+&lt;/style&gt;
+&lt;div class=&#039;loginHiru&#039;&gt;
+  &lt;!-- Form Login --&gt;
+  &lt;form class=&#039;login-form&#039; id=&#039;formlogin&#039;&gt;
+   &lt;h3&gt;Welcome Back!&lt;/h3&gt; 
+  &lt;div class=&#039;group_login&#039;&gt;
+  &lt;input class=&#039;frinput&#039; id=&#039;login_email&#039; placeholder=&#039;name@gmail.com&#039; required=&#039;required&#039; type=&#039;email&#039;/&gt;
+     &lt;span class=&#039;bar_login&#039;&gt;&lt;/span&gt;
+      &lt;label&gt;EMAIL ADDRESS&lt;/label&gt;
+      &lt;/div&gt;
+   &lt;div class=&#039;group_login&#039;&gt;
+   &lt;input class=&#039;frinput Validpass1&#039; id=&#039;login_password&#039; placeholder=&#039;Password&#039; required=&#039;required&#039; type=&#039;password&#039;/&gt;
+  &lt;span class=&#039;bar_login&#039;&gt;&lt;/span&gt;
+&lt;label&gt;PASSWORD&lt;/label&gt;
+&lt;span class=&#039;icon_lock_pass_login&#039; id=&#039;clickShowpass_login&#039;&gt;
+&lt;svg class=&#039;showPas icon1&#039; viewBox=&#039;0 0 24 24&#039;&gt;&lt;path d=&#039;M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z&#039; fill=&#039;#bbb&#039;/&gt;&lt;/svg&gt;
+&lt;svg class=&#039;showPas icon2 hiddeniconpass_login&#039; viewBox=&#039;0 0 24 24&#039;&gt;
+&lt;path d=&#039;M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z&#039; fill=&#039;#bbb&#039;/&gt;&lt;/svg&gt;
+&lt;/span&gt; 
+      &lt;/div&gt;
+&lt;div class=&#039;boxbutton&#039;&gt;        
+   &lt;button class=&#039;btn_login&#039; type=&#039;submit&#039;&gt;Sign-in&lt;/button&gt;
+      &lt;/div&gt;  
+   &lt;p class=&#039;message&#039;&gt;
+   &lt;a class=&#039;reoverPassword&#039;&gt;Forgot Password?&lt;/a&gt;
+    &lt;/p&gt;
+    &lt;div class=&quot;border-wrp&quot;&gt;
+&lt;div class=&quot;border-bts&quot;&gt;&lt;/div&gt;
+&lt;span class=&quot;spanor&quot;&gt;Hirutshuji&lt;/span&gt;
+&lt;div class=&quot;border-bts&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+  &lt;p class=&#039;message&#039;&gt;Don&amp;#39;t have an account? &lt;a class=&#039;createAccount&#039;&gt;Register&lt;/a&gt;
+    &lt;/p&gt;   
+    &lt;/form&gt; 
+    &lt;/div&gt;   
+&lt;div id=&quot;loginNotif&quot; class=&quot;notif hiddeniconpass_login&quot;&gt;
+  &lt;div class=&quot;notif-content&quot;&gt;
+    &lt;span id=&quot;notifIcon&quot;&gt;&lt;/span&gt;
+    &lt;h4 id=&quot;notifTitle&quot;&gt;&lt;/h4&gt;
+    &lt;p id=&quot;notifText&quot;&gt;&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt; 
+&lt;script&gt;
+ /*&lt;![CDATA[*/
+    const pesanLogin = {
+   berhasilLogin: {
+        judul: &quot;Berhasil Login!&quot;,
+        pesan: &quot;kamu berhasil masuk ke akun kamu.&quot;
+        },
+   emailBelumTervertifikasi: {
+        judul: &quot;Email Belum Terverifikasi&quot;,
+        pesan: &quot;Pastikan kamu telah melakukan verifikasi email sebelum mencoba login.&quot;,
+        ya: &quot;Mengerti&quot;
+        },
+   kirimEmailVertifikasi:{
+        judul: &quot;Kirim Vertifikasi email&quot;,
+        pesan:&quot;Apakah kamu ingin Vertifikasi email sekarang?&quot;,
+        ya: &quot;ya,kirim&quot;,
+        tidak: &quot;batal&quot;
+        },
+    vertifyTerkirim:{
+      judul:&quot;verifikasi terkirim&quot;,
+      pesan:&quot;Email verifikasi telah dikirim ke&quot;,
+      pesan2:&quot;Silahkan cek inbox pesan kamu&quot;
+        },
+    ijinLogin:{
+      judul:&quot;warning&quot;,
+      pesan:&quot;Maaf, kamu tidak diizinkan untuk melakukan operasi autentikasi di luar domain yang terdaftar.&quot;
+       },
+     loaderLogin:{
+      judul:&quot;sabar bro&quot;,
+      pesan:&quot;Mengecek data kamu dulu&quot;
+      },
+     errorLog: {
+       judul: &quot;Gagal Login&quot;,
+       pesan: &quot;Terjadi kesalahan saat login. Silakan coba lagi nanti.&quot;
+        },
+     userTidakDitemukan: {
+      judul: &quot;Gagal Login&quot;,
+        pesan: &quot;Email tidak ditemukan. Silakan daftar terlebih dahulu.&quot;,
+        ya:&quot;Tutup&quot;
+        },
+     emailSalah: {
+      judul: &quot;Gagal Login&quot;,
+        pesan: &quot;Email yang kamu masukan salah. Silakan masukan email benar&quot;,
+        ya:&quot;Tutup&quot;
+        },
+     passwordSalah: {
+        judul: &quot;Gagal Login&quot;,
+        pesan: &quot;Kata sandi salah. Silakan coba lagi.&quot;
+        },
+    loginLimit: {
+        judul: &quot;Gagal Login&quot;,
+        pesan :&quot;Terlalu banyak percobaan masuk. Silakan coba lagi nanti.&quot;
+       },
+    gagalVertifypassword: {
+        judul: &quot;Gagal Login&quot;,
+        pesan: &quot;Verifikasi password gagal. harap masukan password yang benar.&quot;
+        }
+    };
+    
+
+ let iconSukses = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;green&quot; d=&quot;m9 20.42l-6.21-6.21l2.83-2.83L9 14.77l9.88-9.89l2.83 2.83z&quot;/&gt;&lt;/svg&gt;`; 
+  
+ let iconGagal = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;red&quot; d=&quot;M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z&quot;/&gt;&lt;/svg&gt;`;
+ let iconInfo = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffff00&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2.5&quot; d=&quot;M12 6v8m.05 4v.1h-.1V18z&quot;/&gt;&lt;/svg&gt;`;
+ let iconWarning= `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 512 512&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffd43b&quot; stroke-linecap=&quot;round&quot; stroke-miterlimit=&quot;10&quot; stroke-width=&quot;15&quot; d=&quot;m381 340.1l-52.8-97.3l-51-94.2a24 24 0 0 0-42.4 0l-51 94.2l-52.8 97.3a24.3 24.3 0 0 0 21.2 35.9h207.7a24.2 24.2 0 0 0 21.1-35.9Z&quot;/&gt;&lt;path fill=&quot;#ffd43b&quot; d=&quot;M243 216.6q1.5-1.3 5.5-1.3h15.3c2.7 0 4.5.4 5.6 1.3s1.5 2.4 1.4 4.7l-3 71.8c-.1 2.3-.7 3.8-1.6 4.6s-2.7 1.3-5.4 1.3h-9.4c-2.6 0-4.4-.5-5.3-1.3s-1.5-2.3-1.6-4.6l-2.9-71.9c0-2.2.4-3.8 1.4-4.6m29 107.6q0 7-3 9.5c-2 1.8-5.6 2.7-11 2.7h-4c-5.4 0-9-1-11-2.6s-3-5-3-9.6v-2.9q0-7 3-9.6c2-1.7 5.6-2.5 11-2.5h4c5.4 0 9 .8 11 2.5s3 5 3 9.6Z&quot;/&gt;&lt;/svg&gt;`;
+ let iconLoader = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;#ffff00&quot; d=&quot;M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z&quot;&gt;&lt;animateTransform attributeName=&quot;transform&quot; dur=&quot;0.75s&quot; repeatCount=&quot;indefinite&quot; type=&quot;rotate&quot; values=&quot;0 12 12;360 12 12&quot;/&gt;&lt;/path&gt;&lt;/svg&gt;`;
+ let iconTanya = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 64 64&quot;&gt;&lt;path fill=&quot;#be212f&quot; d=&quot;M31.03 51.23q-2.854 0-4.872 1.809c-1.344 1.204-2.02 2.662-2.02 4.381q0 2.905 2.038 4.563c1.362 1.106 2.948 1.664 4.761 1.664c1.843 0 3.451-.55 4.827-1.641q2.062-1.642 2.062-4.587q0-2.577-1.972-4.381c-1.315-1.203-2.921-1.808-4.827-1.808M50.458 8.617c-1.75-2.656-4.251-4.78-7.438-6.319C39.851.773 36.16 0 32.046 0c-4.429 0-8.371.926-11.711 2.753c-3.344 1.83-5.928 4.178-7.68 6.978C10.895 12.545 10 15.375 10 18.145c0 1.477.616 2.856 1.824 4.096c1.214 1.248 2.724 1.879 4.488 1.879c3.01 0 5.061-1.766 6.105-5.23c.951-2.865 2.124-5.05 3.48-6.498c1.276-1.364 3.346-2.056 6.149-2.056c2.418 0 4.326.678 5.84 2.075c1.491 1.378 2.217 3.02 2.217 5.02c0 1.01-.236 1.917-.709 2.775c-.503.9-1.13 1.727-1.863 2.463c-.775.776-2.054 1.941-3.802 3.473c-2.036 1.785-3.679 3.348-4.875 4.646c-1.25 1.349-2.263 2.935-3.02 4.712c-.756 1.789-1.14 3.924-1.14 6.349c0 2.069.577 3.671 1.717 4.762c1.128 1.08 2.533 1.63 4.178 1.63c3.145 0 5.121-1.719 5.709-4.935q.448-2.006.674-2.802c.136-.483.333-.979.586-1.474c.246-.482.635-1.028 1.16-1.625c.547-.631 1.286-1.371 2.192-2.198c3.389-3.03 5.78-5.222 7.106-6.52c1.368-1.337 2.561-2.946 3.546-4.778c1.014-1.875 1.528-4.084 1.528-6.559c.002-3.131-.887-6.072-2.637-8.737&quot;/&gt;&lt;/svg&gt;`;
+
+   // isi opsi redirect
+    const RedirectOpsiHalaman_lHiru= {
+        custom_url: &quot;https://datakodehiru.blogspot.com&quot;,
+        homepage_url: window.location.hostname
+    };
+  
+
+ //redirect yang dipilih 
+let redirectOpsi_loginHiru = &quot;Customurl&quot;;
+/*ada tiga opsi &quot;Customurl&quot;,&quot;Homepage&quot;,&quot;Reload&quot; */
+
+let waktuTunda_lHiru = 1000;// 1detik sebelum redirect dilakukan
+
+let waktuTundaNotif = 3000; //3detik notif berhasil login muncul
+/*]]&gt;*/
+&lt;/script&gt;  
+&lt;script defer=&#039;defer&#039;&gt;
+/*&lt;![CDATA[*/ 
+ let idPassword = &#039;#login_password&#039;;
+function showpasslogin() {
+ var pshowLogin = document.querySelector(idPassword);
+ pshowLogin.setAttribute(&#039;type&#039;, &#039;text&#039;); 
+var loginpassshowicon = document.querySelector(&#039;.icon1&#039;); loginpassshowicon.classList.add(&quot;hiddeniconpass_login&quot;);
+ var loginpassshowicon2 = document.querySelector(&#039;.icon2&#039;); loginpassshowicon2.classList.remove(&quot;hiddeniconpass_login&quot;);
+}
+function hidepasslogin() {
+ var hidepassLogin = document.querySelector(idPassword);
+ hidepassLogin.setAttribute(&#039;type&#039;, &#039;password&#039;);
+
+ var hideniconpasslogin = document.querySelector(&#039;.icon1&#039;); hideniconpasslogin.classList.remove(&quot;hiddeniconpass_login&quot;);
+ var hideniconpasslogin2 = document.querySelector(&#039;.icon2&#039;); hideniconpasslogin2.classList.add(&quot;hiddeniconpass_login&quot;);
+}
+
+
+var pwShownLogin = 0;
+document.getElementById(&quot;clickShowpass_login&quot;).addEventListener(&quot;click&quot;, function () {
+if (pwShownLogin == 0) {
+ pwShownLogin = 1;
+showpasslogin();
+}
+else {
+ pwShownLogin = 0;
+hidepasslogin();
+}}, false);
+function encryptPassword(password) {
+  return btoa(password);
+}
+function decryptPassword(encryptedPassword) {
+  return atob(encryptedPassword);
+}
+function simpanHistoryLoginTerakhir(email, password) {
+  const ceklog = encryptPassword(password);
+  localStorage.setItem(&#039;lastLoginEmail&#039;, email);
+  localStorage.setItem(&#039;lastLoginPassword&#039;,ceklog);
+}
+function getLastLoginHistory() {
+  const lastLoginEmail = localStorage.getItem(&#039;lastLoginEmail&#039;);
+  const ceklog = localStorage.getItem(&#039;lastLoginPassword&#039;);
+  return { email: lastLoginEmail, password: ceklog };
+}
+function showLastLoginHistory() {
+  const { email, password } = getLastLoginHistory();
+  if (email) {
+    document.getElementById(&#039;login_email&#039;).value = email;
+  }
+  if (password) {
+    const decryptedPassword = decryptPassword(password);
+    document.getElementById(&#039;login_password&#039;).value = decryptedPassword;
+  }
+}
+window.onload = function() {
+  showLastLoginHistory();}
+ /*]]&gt;*/
+   &lt;/script&gt;
+</code></pre>
+<b>Register</b>
+<pre><code class="html">
+&lt;style&gt;
+.registerHiru{max-width:400px;margin:20px auto;padding:30px;background-color:#fff;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.1)}.registerHiru h3{text-align:center;margin-bottom:20px;font-size:1.8rem;color:#333}.group_register{position:relative;margin-bottom:25px}.group_register input{font-size:16px;padding:10px;display:block;width:100%;border:none;border-bottom:2px solid #ccc;background:0 0;outline:0;color:#333}.group_register input:focus{border-bottom:2px solid #007bff}.bar_register{position:absolute;bottom:0;left:0;height:2px;width:0;background-color:#007bff;transition:width .3s}.group_register input:focus~.bar_register{width:100%}.group_register label{position:absolute;top:-15px;left:0;font-size:14px;color:#999;pointer-events:none;transition:.2s}.btn_register,.notif-buttons button{background-color:#000;cursor:pointer;transition:background-color .3s}.group_register input:focus~label,.group_register input:valid~label{top:-15px;left:0;color:#007bff;font-size:12px}.icon_lock_pass_register{position:absolute;top:50%;right:10px;transform:translateY(-50%);cursor:pointer}.icon_lock_pass_register svg{width:20px;height:20px}.error-message{color:red;font-size:12px;margin-top:5px;display:none}.btn_register{display:block;width:100%;padding:10px;border:none;color:#fff;font-size:16px;border-radius:4px}.btn_register:hover,.notif-buttons button:hover{background-color:#0056b3}.inforegister,.message_register{text-align:center;margin-top:15px;font-size:14px}.message_register a{color:#007bff;text-decoration:none}.message_register a:hover{text-decoration:underline}.brd_r{margin:0 5px;color:#ccc}@media (max-width:500px){.registerHiru{padding:20px}.btn_register,.group_register input{font-size:14px}}.hiddeniconpass_registers{display:none} .notifregister_main{position:fixed;top:10px;right:20px;width:300px;padding:15px;border-radius:5px;box-shadow:0 2px 5px rgba(0,0,0,.2);display:flex;align-items:center;background-color:#222;color:#fff;font-size:12px; z-index:9999999;transition:opacity .5s,transform .5s}.notifkonfirmasi{top:30%;right:20px}.notifregister_main.hiddenregister_notif{opacity:0;transform:translateY(-200px)}.notif-icon{font-size:24px;margin-right:10px}.notif-content{flex:1}.notif-title{font-weight:700;margin-bottom:5px}.notif-text{font-size:14px}.notif-buttons{margin-top:10px}.notif-buttons button{color:#fff;border:none;padding:8px 16px;border-radius:4px;margin-right:10px}.success{border-left:5px solid #28a745}.error{border-left:5px solid #dc3545}.warning{border-left:5px solid #ffc107}.info{border-left:5px solid #17a2b8}
+  &lt;/style&gt;
+
+&lt;div class=&#039;registerHiru&#039;&gt;
+&lt;!-- Form Register --&gt;
+&lt;form name=&quot;form_register&quot; class=&#039;register-form&#039; id=&#039;register-form&#039;&gt;
+    &lt;h3&gt;Create Account&lt;/h3&gt;
+&lt;div class=&#039;group_register&#039;&gt;
+&lt;input name=&quot;name&quot; id=&#039;register-username&#039; placeholder=&#039;Name&#039; required=&#039;required&#039; type=&#039;text&#039; autocomplete=&quot;off&quot;/&gt;
+    &lt;span class=&#039;bar_register&#039;&gt;&lt;/span&gt;
+     &lt;label&gt;YOUR NAME&lt;/label&gt;
+     &lt;/div&gt;
+&lt;div class=&#039;group_register&#039;&gt;
+ &lt;input name=&quot;email&quot; id=&#039;register-email&#039; pattern=&#039;[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$&#039; placeholder=&#039;name@gmail.com&#039; required=&#039;required&#039; value=&quot;youremail@gmail.com&quot; type=&#039;email&#039; autocomplete=&quot;off&quot;/&gt;
+ &lt;span class=&#039;bar_register&#039;&gt;&lt;/span&gt;
+ &lt;label&gt;EMAIL ADDRESS&lt;/label&gt;       &lt;/div&gt;
+
+&lt;div class=&#039;group_register&#039;&gt;
+ &lt;input name=&quot;password&quot; class=&#039;Validpass2&#039; id=&#039;register-password&#039; placeholder=&#039;Password&#039; required=&#039;required&#039; type=&#039;password&#039; autocomplete=&quot;off&quot;/&gt; 
+   &lt;span class=&#039;bar_register&#039;&gt;&lt;/span&gt;
+  &lt;label&gt;PASSWORD&lt;/label&gt;
+&lt;span class=&#039;icon_lock_pass_register&#039; id=&#039;showpass2&#039;&gt;
+&lt;svg class=&#039;showPas icon3&#039; viewBox=&#039;0 0 24 24&#039;&gt;&lt;path d=&#039;M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z&#039; fill=&#039;var(--color-svg-input)&#039;/&gt;&lt;/svg&gt;
+&lt;svg class=&#039;showPas icon4 hiddeniconpass_registers&#039; viewBox=&#039;0 0 24 24&#039;&gt;
+&lt;path d=&#039;M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z&#039; fill=&#039;var(--color-svg-input)&#039;/&gt;&lt;/svg&gt;
+&lt;/span&gt;
+    &lt;/div&gt;  
+  &lt;div class=&#039;group_register&#039;&gt;
+    &lt;input name=&quot;password&quot; id=&#039;register-confirm-password&#039; placeholder=&#039;Confirm Password&#039; required=&#039;required&#039; type=&#039;password&#039; autocomplete=&quot;off&quot;/&gt;
+&lt;span id=&quot;passTidaksama&quot; class=&quot;error-message&quot;&gt;&lt;/span&gt;
+    &lt;span class=&#039;bar_register&#039;&gt;&lt;/span&gt;
+    &lt;label&gt;CONFIRM PASSWORD&lt;/label&gt;
+&lt;/div&gt;
+  &lt;button class=&#039;btn_register&#039; type=&#039;submit&#039;&gt;Sign-up&lt;/button&gt;
+&lt;div class=&#039;inforegister&#039;&gt;
+&lt;p class=&#039;message_register&#039;&gt;Baca kebijakan kami disini&lt;/p&gt;&lt;p class=&#039;message_register&#039;&gt;&lt;span class=&#039;brd_r&#039;&gt;&lt;/span&gt;&lt;a href=&#039;#&#039; class=&#039;readnow&#039;&gt;Read Now&lt;/a&gt;&lt;span class=&#039;brd_r&#039;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p class=&#039;message_register&#039;&gt;Have an account?&lt;a class=&#039;signIn&#039; href=&#039;#&#039;&gt;Sign-in&lt;/a&gt;&lt;/p&gt;
+    &lt;/form&gt;       
+    
+      &lt;/div&gt;
+      
+      &lt;!-- Notifikasi Pendaftaran --&gt;
+&lt;div id=&quot;registerNotif&quot; class=&quot;notifregister_main hiddenregister_notif&quot;&gt;
+    &lt;div class=&quot;notif-icon&quot; id=&quot;notifIcon_register&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;notif-content&quot;&gt;
+        &lt;div class=&quot;notif-title&quot; id=&quot;notifTitle_register&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;notif-text&quot; id=&quot;notifText_register&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Notifikasi Konfirmasi --&gt;
+&lt;div id=&quot;confirmRegisterNotif&quot; class=&quot;notifkonfirmasi warning notifregister_main hiddenregister_notif&quot;&gt;
+    &lt;div class=&quot;notif-icon&quot;&gt;⚠️&lt;/div&gt;
+    &lt;div class=&quot;notif-content&quot;&gt;
+        &lt;div class=&quot;notif-title&quot;&gt;Konfirmasi Pendaftaran&lt;/div&gt;
+        &lt;div class=&quot;notif-text&quot;&gt;Apakah Anda yakin ingin mendaftar?&lt;/div&gt;
+        &lt;div class=&quot;notif-buttons&quot;&gt;
+            &lt;button id=&quot;confirmYes&quot;&gt;tentu&lt;/button&gt;
+            &lt;button id=&quot;confirmNo&quot;&gt;batal&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+ &lt;script defer=&#039;defer&#039;&gt;
+/*&lt;![CDATA[*/ 
+const pesanNotifregister = {
+    registerBerhasil: {
+        judul: &quot;Berhasil Register!&quot;,
+        pesan: &quot;Silakan periksa email Kamu untuk memverifikasi akunmu&quot;
+    },
+    konfimasiRegister: {
+        judul: &quot;Apakah kamu yakin ingin register?&quot;,
+        pesan: &quot;kamu akan membuat akun dengan email ini &quot;,
+        pesan2:&quot; Jika kamu click &#039;tentu&#039; maka kami anggap bahwa kamu sudah membaca dan setuju dengan kebijakan kami. &quot;,
+    },
+    emailTerdaftar: {
+        judul: &quot;Email terdaftar&quot;,
+        pesan:&quot;Email sudah digunakan. Silakan gunakan email lain.&quot;
+    },
+    errorRegister:{
+     judul:&quot;Gagal register&quot;,
+     pesan: &quot;Registrasi gagal. &quot;
+    },
+  
+    loaderSaatRegister:{
+     judul:&quot;Proses register&quot;,
+     pesan:&quot;Sabar...sedang diproses&quot;
+    },
+  
+    konfimasiVertifyemail:{
+     judul:&quot;Email verifikasi&quot;,
+     pesan:&quot;kami akan mengirim verifikasi ke emailmu untuk memverifikasi akunmu, click &#039;Oke&#039; untuk mendapatkan pesan vertifikasi&quot;,
+    },
+  
+    vertifyEmailterkirim:{
+     judul:&quot;verifikasi berhasil terkirim&quot;,
+     pesan:&quot;Email verifikasi telah dikirim, silahkan cek inbox pesan kamu.&quot;
+    },
+    infoRulevertify:{
+     judul:&quot;Pemberitahuan&quot;,
+     pesan:&quot;Beberapa fitur tidak dapat diakses sampai email verifikasi dikonfimasi.&quot;
+    },
+
+ijinRegister:{
+     judul:&quot;warning&quot;,
+     pesan:&quot;Maaf, kamu tidak diizinkan untuk melakukan operasi autentikasi di luar domain yang terdaftar.&quot;
+    },
+};
+
+// isi opsi redirect
+    const RedirectOpsiHalaman_rgHiru= {
+        custom_url: &quot;https://datakodehiru.blogspot.com&quot;,
+        homepage_url: window.location.hostname
+    };
+ //redirect yang dipilih 
+let redirectOpsi_rgHiru = &quot;Customurl&quot;;
+/*ada tiga opsi &quot;Customurl&quot;,&quot;Homepage&quot;,&quot;Reload&quot; */
+
+let waktuTunda_rgHiru = 0;// 0detik sebelum redirect dilakukan
+   
+ let iconSukses = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;green&quot; d=&quot;m9 20.42l-6.21-6.21l2.83-2.83L9 14.77l9.88-9.89l2.83 2.83z&quot;/&gt;&lt;/svg&gt;`; 
+  
+ let iconGagal = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;red&quot; d=&quot;M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z&quot;/&gt;&lt;/svg&gt;`;
+ let iconInfo = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffff00&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2.5&quot; d=&quot;M12 6v8m.05 4v.1h-.1V18z&quot;/&gt;&lt;/svg&gt;`;
+ let iconWarning= `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 512 512&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffd43b&quot; stroke-linecap=&quot;round&quot; stroke-miterlimit=&quot;10&quot; stroke-width=&quot;15&quot; d=&quot;m381 340.1l-52.8-97.3l-51-94.2a24 24 0 0 0-42.4 0l-51 94.2l-52.8 97.3a24.3 24.3 0 0 0 21.2 35.9h207.7a24.2 24.2 0 0 0 21.1-35.9Z&quot;/&gt;&lt;path fill=&quot;#ffd43b&quot; d=&quot;M243 216.6q1.5-1.3 5.5-1.3h15.3c2.7 0 4.5.4 5.6 1.3s1.5 2.4 1.4 4.7l-3 71.8c-.1 2.3-.7 3.8-1.6 4.6s-2.7 1.3-5.4 1.3h-9.4c-2.6 0-4.4-.5-5.3-1.3s-1.5-2.3-1.6-4.6l-2.9-71.9c0-2.2.4-3.8 1.4-4.6m29 107.6q0 7-3 9.5c-2 1.8-5.6 2.7-11 2.7h-4c-5.4 0-9-1-11-2.6s-3-5-3-9.6v-2.9q0-7 3-9.6c2-1.7 5.6-2.5 11-2.5h4c5.4 0 9 .8 11 2.5s3 5 3 9.6Z&quot;/&gt;&lt;/svg&gt;`;
+
+/*]]&gt;*/
+  &lt;/script&gt;     
+&lt;script defer=&#039;defer&#039;&gt;
+/*&lt;![CDATA[*/ 
+function showpassregister() {
+ var pshowRegister = document.querySelector(&#039;#register-password&#039;);
+ pshowRegister.setAttribute(&#039;type&#039;, &#039;text&#039;); 
+var registerpassshowicon = document.querySelector(&#039;.icon3&#039;); registerpassshowicon.classList.add(&quot;hiddeniconpass_registers&quot;);
+ var registerpassshowicon2 = document.querySelector(&#039;.icon4&#039;); registerpassshowicon2.classList.remove(&quot;hiddeniconpass_registers&quot;);
+}
+
+function hidepassregister() {
+ var hidepassregister = document.querySelector(&#039;#register-password&#039;);
+ hidepassregister.setAttribute(&#039;type&#039;, &#039;password&#039;);
+
+ var hideiconpassregister = document.querySelector(&#039;.icon3&#039;); hideiconpassregister.classList.remove(&quot;hiddeniconpass_registers&quot;);
+
+var hideiconpassregister2 = document.querySelector(&#039;.icon4&#039;); hideiconpassregister2.classList.add(&quot;hiddeniconpass_registers&quot;);
+ }
+ 
+ var pwShownRegister = 0;
+document.getElementById(&quot;showpass2&quot;).addEventListener(&quot;click&quot;, function () {
+    if (pwShownRegister == 0) {
+        pwShownRegister = 1;
+        showpassregister();
+    } else {
+        pwShownRegister = 0;
+        hidepassregister();
+    }
+}, false);
+function validatePassword() {
+    var password = document.getElementById(&quot;register-password&quot;);
+    var confirm_password = document.getElementById(&quot;register-confirm-password&quot;);
+    var error_message = document.getElementById(&quot;passTidaksama&quot;);
+
+    if (password.value === &quot;&quot; || password.value !== confirm_password.value) {
+        confirm_password.style.border = &quot;thin solid red&quot;;
+        error_message.innerHTML = &quot;password is not the same&quot;;
+    } else {
+ confirm_password.style.border = &quot;&quot;; 
+ error_message.innerHTML = &quot;password correct&quot;;
+    }
+}
+document.getElementById(&quot;register-password&quot;).addEventListener(&quot;input&quot;, validatePassword);
+document.getElementById(&quot;register-confirm-password&quot;).addEventListener(&quot;input&quot;, validatePassword);
+/*]]&gt;*/
+  &lt;/script&gt;     
+</code></pre>
+<b>Profile</b>
+<pre><code class="html">
+&lt;style&gt;
+.ProfileX {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.ProfileX h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile_data_0,
+.profile_data_1,
+.profile_data_2 {
+    margin-bottom: 20px;
+}
+
+.fotoprofile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.logoprofile {
+    margin-right: 10px;
+}
+
+#userPhoto {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+input[type=&quot;file&quot;] {
+    display: none;
+}
+
+label {
+    cursor: pointer;
+    color: #007bff;
+    text-decoration: underline;
+}
+
+#updateprofile_hr {
+    background-color: #222;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.data-user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.Ndata {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.username_edit {
+    display: flex;
+    align-items: center;
+}
+
+.edit_Nama {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #007bff;
+    font-size: 20px;
+    margin-left: 10px;
+}
+
+.btn_opsi_profile {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn_opsi_profile button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color:#fff;
+    margin: 5px;
+}
+
+.DeleteAccount {
+    background-color: #242424;
+}
+
+.Logout {
+    background-color: #242424;
+}
+
+.notif-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    background-color: #222;
+    color:#fff;
+    z-index: 999999;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.notif-container.hiddenprofile_notif {
+    opacity: 0;
+    transform: translateY(-200px);
+}
+
+.notif-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.notif-content {
+    flex: 1;
+}
+
+.notif-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.notif-text {
+    font-size: 14px;
+}
+
+.notif-buttons {
+    margin-top: 10px;
+}
+
+.notif-buttons button {
+    background-color: #242424;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.notif-buttons button:hover {
+    background-color: #0056b3;
+}
+
+.success {
+    border-left: 5px solid #28a745;
+}
+
+.error {
+    border-left: 5px solid #dc3545;
+}
+
+.warning {
+    border-left: 5px solid #ffc107;
+}
+
+.info {
+    border-left: 5px solid #17a2b8;
+}
+  
+.loader_delete_akun {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loader_delete_akun::after {
+    content: &#039;&#039;;
+    border: 8px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 8px solid #242424;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+  
+&lt;/style&gt;
+
+&lt;!-- Form Profile --&gt;
+&lt;div class=&#039;ProfileX form&#039; id=&#039;profile_hr&#039;&gt;
+ &lt;h1&gt;Profile&lt;/h1&gt;
+&lt;div class=&#039;profile_data_0&#039;&gt;
+&lt;span class=&#039;fotoprofile&#039;&gt;
+&lt;span class=&#039;logoprofile&#039; id=&#039;cc_profile&#039; style=&quot;display:none;&quot;&gt;
+&lt;img  id=&quot;userPhoto&quot; src=&quot;&quot; alt=&quot;User Photo&quot;&gt;
+&lt;/span&gt;  
+&lt;input type=&quot;file&quot; id=&quot;uploadprofile_hr&quot; accept=&quot;image/*&quot; style=&quot;display:none;&quot;&gt;
+&lt;label for=&quot;uploadprofile_hr&quot; style=&quot;cursor: pointer;&quot;&gt;Pilih Foto&lt;/label&gt;
+&lt;script&gt;
+  const input = document.getElementById(&#039;uploadprofile_hr&#039;);
+  const userPhoto = document.getElementById(&#039;userPhoto&#039;);
+  input.addEventListener(&#039;change&#039;, function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+     userPhoto.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+&lt;/script&gt;
+&lt;span id=&quot;updateprofile_hr&quot;&gt;Update&lt;/span&gt;
+&lt;/span&gt;  
+&lt;div class=&#039;profile_data_1&#039;&gt;
+   &lt;span class=&#039;data-user&#039;&gt;
+    &lt;span class=&#039;Ndata&#039;&gt;Uid:&lt;/span&gt;
+  &lt;span id=&#039;profile-uid&#039;&gt;&lt;/span&gt;
+     &lt;/span&gt;
+ &lt;span class=&#039;data-user&#039;&gt;
+   &lt;span class=&#039;Ndata&#039;&gt;Role: 
+  &lt;/span&gt;
+    &lt;span id=&#039;profile-role&#039;&gt;
+    &lt;/span&gt; 
+    &lt;/span&gt;
+   &lt;span class=&#039;data-user&#039;&gt;
+ &lt;span class=&#039;Ndata&#039;&gt;Exp: 
+    &lt;/span&gt;
+    &lt;span id=&#039;exp-role&#039;&gt;&lt;/span&gt;
+   &lt;/span&gt; 
+   
+    &lt;/div&gt;
+&lt;/div&gt; 
+ &lt;div class=&#039;profile_data_2&#039;&gt;          
+&lt;span class=&#039;data-user username_edit&#039;&gt;
+    &lt;span class=&#039;Ndata&#039;&gt;Username:&lt;/span&gt;
+   &lt;span id=&#039;profile-username&#039;&gt;&lt;/span&gt; 
+    &lt;button id=&quot;UpdateUsername&quot; class=&#039;edit_Nama&#039;&gt;&lt;svg height=&#039;20&#039; viewBox=&#039;0 0 32 32&#039; width=&#039;20&#039; xmlns=&#039;http://www.w3.org/2000/svg&#039;&gt;&lt;path d=&#039;M13 3c-3.855 0-7 3.145-7 7c0 2.41 1.23 4.55 3.094 5.813C5.527 17.343 3 20.883 3 25h2c0-4.43 3.57-8 8-8c2.145 0 4.063.879 5.5 2.25l-4.719 4.719l-.062.312l-.688 3.532l-.312 1.468l1.469-.312l3.53-.688l.313-.062l10.094-10.094c1.16-1.16 1.16-3.09 0-4.25a3.018 3.018 0 0 0-4.219-.031l-3.968 3.969a10.103 10.103 0 0 0-3.032-2A7.024 7.024 0 0 0 20 10c0-3.855-3.145-7-7-7zm0 2c2.773 0 5 2.227 5 5s-2.227 5-5 5s-5-2.227-5-5s2.227-5 5-5zm13 10c.254 0 .52.082.719.281a.977.977 0 0 1 0 1.406l-9.688 9.688l-1.781.375l.375-1.781l9.688-9.688A.934.934 0 0 1 26 15z&#039; fill=&#039;currentColor&#039;/&gt;&lt;/svg&gt;&lt;/button&gt;
+    &lt;/span&gt;
+  &lt;span class=&#039;data-user&#039;&gt;
+    &lt;span class=&#039;Ndata&#039;&gt;Email:&lt;/span&gt;
+  &lt;span id=&#039;profile-email&#039;&gt;&lt;/span&gt;
+    &lt;/span&gt;  
+  &lt;div class=&#039;btn_opsi_profile&#039;&gt;
+  &lt;!-- Loader delete --&gt;
+&lt;div id=&quot;loader_delete_akun&quot; class=&quot;loader_delete_akun&quot; style=&quot;display: none;&quot;&gt;&lt;/div&gt;
+&lt;button id=&#039;deleteAccount&#039; class=&#039;DeleteAccount&#039;&gt;Delete Account?&lt;/button&gt;  
+  &lt;button class=&#039;Logout&#039; id=&#039;logoutButton&#039;&gt;logout?&lt;/button&gt;  
+   &lt;/div&gt;
+	&lt;/div&gt;
+&lt;/div&gt;   
+
+
+&lt;div id=&quot;notifContainer&quot; class=&quot;notif-container hiddenprofile_notif&quot;&gt;
+    &lt;div id=&quot;notifIcon&quot; class=&quot;notif-icon&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;notif-content&quot;&gt;
+        &lt;div id=&quot;notifTitle&quot; class=&quot;notif-title&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;notifText&quot; class=&quot;notif-text&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;notifButtons&quot; class=&quot;notif-buttons&quot;&gt;
+        &lt;button id=&quot;notifConfirm&quot;&gt;OK&lt;/button&gt;
+        &lt;button id=&quot;notifCancel&quot; class=&quot;hiddenprofile_notif&quot;&gt;Cancel&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+ /*&lt;![CDATA[*/
+  const pesanNotif = {
+    logout: {
+        judul: &quot;Berhasil logout!&quot;,
+        pesan: &quot;Akun Telah berhasil Logout&quot;
+    },
+    belumLogin: {
+        judul: &quot;Kamu belum Login&quot;,
+        pesan: &quot;Kamu harus Login terlebih dahulu dan pastikan sudah vertifikasi email kamu sebelum kesini&quot;
+    },
+    belumTervertifikasi:{
+      judul: &quot;Kamu belum Tervertifikasi&quot;,
+      pesan: &quot;Email Kamu harus Tervertifikasi dahulu dan pastikan sudah vertifikasi email kamu sebelum kesini&quot;
+    },    
+    konfirmasiPenghapusan: {
+        judul:&quot;Konfirmasi&quot;,
+        pesan:  &quot;Akun yang sudah dihapus tidak bisa dikembalikan. password dibutuhkan sebagai konfirmasi&quot;,
+    },
+    berhasilmenghapusAkun: {
+        judul: &quot;Berhasil Dihapus&quot;,
+        pesan: &quot;Akun kamu sudah berhasil dihapus&quot;
+    },
+    autentikasiGagal: {
+        judul: &quot;Gagal dihapus&quot;,
+        pesan: &quot;Mohon Periksa kata sandi kamu dengan benar&quot;
+    },
+    updateUsername: {
+        judul: &quot;Masukan Username&quot;,
+        pesan:&quot;Silahkan masukan Username yang baru&quot;,
+        ya:&quot;Update&quot;,
+        tidak:&quot;batal&quot;
+    },
+    berhasilUpdateUsername: {
+        judul: &quot;username Diubah&quot;,
+        pesan: &quot;Username berhasil diubah&quot;
+    },
+   updateUsernametelegram: {
+        judul: &quot;Masukan Username&quot;,
+        pesan:&quot;Silahkan masukan Username yang baru&quot;,
+        ya:&quot;Update&quot;,
+        tidak:&quot;batal&quot;
+    },
+    updateprofilephoto:{
+     judul:&quot;Update Foto Profil&quot;,
+     pesan:&quot;Apakah kamu yakin ingin memperbarui foto profil kamu?&quot;,
+     ya:&quot;Update&quot;,
+     tidak: &quot;Batal&quot;
+    },
+    suksesUpdatePhoto:{
+      judul:&#039;berhasil Update&#039;,
+     pesan:&quot;Profile Telah diupdate&quot;
+    },    
+    wrnUpdatePhoto:{
+      judul:&#039;berhasil Update&#039;,
+     pesan:&quot;Profile Telah diupdate&quot;
+    },
+    gagalUpdatePhoto:{
+     judul:&#039;gagal Update&#039;,
+    },
+    loaderupdatephoto:{
+     judul:&quot;Mengunggah Foto Profil&quot;,
+     pesan:&quot;Sabar...sedang diproses&quot;
+    },
+    ijinProfile:{
+     judul:&quot;warning&quot;,
+     pesan:&quot;Maaf, kamu tidak diizinkan untuk melakukan menggunakan fitur ini di luar domain yang terdaftar.&quot;
+    }
+};
+ var urlGambarcustom =&quot;https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGqKEDe_BLCrykvvwKY5QNFVOe-s0C67nRcDJZW_PNHZTOUskqLu2z43OX&amp;s=10&quot;;
+ 
+// isi opsi redirect
+    const RedirectOpsiHalaman_pHiru= {
+        custom_url: &quot;https://datakodehiru.blogspot.com&quot;,
+        homepage_url: window.location.hostname
+    };
+ //redirect yang dipilih 
+let redirectOpsi_pHiru = &quot;Customurl&quot;;
+/*ada tiga opsi &quot;Customurl&quot;,&quot;Homepage&quot;,&quot;Reload&quot; */
+
+let waktuTunda_pHiru = 0;// 0detik sebelum redirect dilakukan
+  
+let iconSukses = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;green&quot; d=&quot;m9 20.42l-6.21-6.21l2.83-2.83L9 14.77l9.88-9.89l2.83 2.83z&quot;/&gt;&lt;/svg&gt;`; 
+  
+ let iconGagal = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;red&quot; d=&quot;M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z&quot;/&gt;&lt;/svg&gt;`;
+  
+ let iconInfo = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffff00&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2.5&quot; d=&quot;M12 6v8m.05 4v.1h-.1V18z&quot;/&gt;&lt;/svg&gt;`;
+ 
+ let iconWarning= `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 512 512&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffd43b&quot; stroke-linecap=&quot;round&quot; stroke-miterlimit=&quot;10&quot; stroke-width=&quot;15&quot; d=&quot;m381 340.1l-52.8-97.3l-51-94.2a24 24 0 0 0-42.4 0l-51 94.2l-52.8 97.3a24.3 24.3 0 0 0 21.2 35.9h207.7a24.2 24.2 0 0 0 21.1-35.9Z&quot;/&gt;&lt;path fill=&quot;#ffd43b&quot; d=&quot;M243 216.6q1.5-1.3 5.5-1.3h15.3c2.7 0 4.5.4 5.6 1.3s1.5 2.4 1.4 4.7l-3 71.8c-.1 2.3-.7 3.8-1.6 4.6s-2.7 1.3-5.4 1.3h-9.4c-2.6 0-4.4-.5-5.3-1.3s-1.5-2.3-1.6-4.6l-2.9-71.9c0-2.2.4-3.8 1.4-4.6m29 107.6q0 7-3 9.5c-2 1.8-5.6 2.7-11 2.7h-4c-5.4 0-9-1-11-2.6s-3-5-3-9.6v-2.9q0-7 3-9.6c2-1.7 5.6-2.5 11-2.5h4c5.4 0 9 .8 11 2.5s3 5 3 9.6Z&quot;/&gt;&lt;/svg&gt;`;
+/*]]&gt;*/  
+&lt;/script&gt;
+</code></pre>
+<b>Change password</b>
+<pre><code class="html">
+&lt;style&gt;
+.resetpasswordHiru{max-width:400px;margin:0 auto;padding:20px;background-color:#f9f9f9;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.1)}.resetpassword-form{display:flex;flex-direction:column}.group_resetpassword{position:relative;margin-bottom:20px}.group_resetpassword input{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:16px}.group_resetpassword input:focus{border-color:#007bff;outline:0}.group_resetpassword .bar_resetpassword{position:absolute;bottom:0;left:0;width:100%;height:2px;background:#222;transform:scaleX(0);transition:transform .3s}.group_resetpassword input:focus~.bar_resetpassword{transform:scaleX(1)}.group_resetpassword label{position:absolute;top:-20px;left:10px;font-size:14px;color:#222;pointer-events:none;transition:.3s}.btn_resetpassword,.notif-buttons button{background-color:#222;cursor:pointer;transition:background-color .3s}.btn_resetpassword{padding:10px;border:none;border-radius:4px;color:#fff;font-size:16px}.btn_resetpassword:hover,.notif-buttons button:hover{background-color:#0056b3}.message_resetpassword{margin-top:20px;text-align:center}.message_resetpassword a{color:#222;text-decoration:none;font-size:14px;display:flex;align-items:center;justify-content:center}.message_resetpassword a:hover{text-decoration:underline}.message_resetpassword svg{margin-right:5px}.notif-container{position:fixed;top:20px;right:20px;width:300px;padding:15px;border-radius:5px;box-shadow:0 2px 5px rgba(0,0,0,.2);display:flex;align-items:center;background-color:#222;color:#fff;z-index:9999999;transition:opacity .5s,transform .5s}.notif-container.hiddenresetpassword_notif{opacity:0;transform:translateY(-200px)}.notif-icon{font-size:24px;margin-right:10px}.notif-content{flex:1}.notif-title{font-weight:700;margin-bottom:5px}.notif-text{font-size:14px}.notif-buttons{margin-top:10px}.notif-buttons button{color:#fff;border:none;padding:8px 16px;border-radius:4px;margin-right:10px}.success{border-left:5px solid #28a745}.error{border-left:5px solid #dc3545}.warning{border-left:5px solid #ffc107}.info{border-left:5px solid #17a2b8}
+&lt;/style&gt;
+   
+&lt;div class=&#039;resetpasswordHiru&#039;&gt;
+&lt;form class=&#039;resetpassword-form&#039; id=&#039;resetPasswordForm&#039;&gt;   
+&lt;div class=&#039;group_resetpassword&#039;&gt;
+ &lt;input id=&#039;resetEmail&#039; pattern=&#039;[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$&#039; placeholder=&#039;name@gmail.com&#039; required=&#039;required&#039; type=&#039;email&#039; value=&#039;yourEmail@gmail.com&#039;/&gt;
+  &lt;span class=&#039;bar_resetpassword&#039;&gt;&lt;/span&gt;
+     &lt;label&gt;EMAIL ADDRESS&lt;/label&gt;
+     &lt;/div&gt;
+      &lt;button id=&#039;resetPasswordForm&#039; class=&#039;btn_resetpassword&#039; type=&#039;submit&#039;&gt;Sumbit&lt;/button&gt;
+   &lt;p class=&#039;message_resetpassword&#039;&gt;&lt;a class=&#039;backToLogin&#039;&gt; Back to Sign-in&lt;/a&gt;&lt;/p&gt;
+    &lt;/form&gt;     
+    &lt;/div&gt;
+&lt;div id=&quot;notifContainer&quot; class=&quot;notif-container hiddenresetpassword_notif&quot;&gt;
+    &lt;div id=&quot;notifIcon&quot; class=&quot;notif-icon&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;notif-content&quot;&gt;
+        &lt;div id=&quot;notifTitle&quot; class=&quot;notif-title&quot;&gt;&lt;/div&gt;
+        &lt;div id=&quot;notifText&quot; class=&quot;notif-text&quot;&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;notifButtons&quot; class=&quot;notif-buttons&quot;&gt;
+        &lt;button id=&quot;notifConfirm&quot;&gt;OK&lt;/button&gt;
+        &lt;button id=&quot;notifCancel&quot; class=&quot;hiddenresetpassword_notif&quot;&gt;Cancel&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+ 
+ 
+ 
+&lt;script defer=&#039;defer&#039;&gt;
+/*&lt;![CDATA[*/ 
+const pesanNotifresetpass = {
+   konfirmasiresetpass: {
+        judul: &quot;Apakah kamu yakin?&quot;,
+        pesan: &quot;kamu akan mereset password kamu ke yang baru, pada akun yang terhubung dengan email ini&quot;,
+   },   
+    ijinResetpass:{
+     judul:&quot;warning&quot;,
+     pesan:&quot;Maaf, kamu tidak diizinkan untuk melakukan operasi autentikasi di luar domain yang terdaftar.&quot;
+    },
+    mengirimResetpass:{
+      judul:&quot;Berhasil terkirim&quot;,
+      pesan: &quot;Email reset ulang kata sandi berhasil terkirim. Periksa pesan masuk diemail kamu&quot;
+    },
+    errorResetpass:{
+      judul:&quot;Gagal Reset password&quot;,
+      pesan: &quot;Harap lapor pada admin jika kamu masih mengalami kendalah error ini&quot;
+    }
+};
+  
+  let iconSukses = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;green&quot; d=&quot;m9 20.42l-6.21-6.21l2.83-2.83L9 14.77l9.88-9.89l2.83 2.83z&quot;/&gt;&lt;/svg&gt;`; 
+  
+ let iconGagal = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;red&quot; d=&quot;M6.4 19L5 17.6l5.6-5.6L5 6.4L6.4 5l5.6 5.6L17.6 5L19 6.4L13.4 12l5.6 5.6l-1.4 1.4l-5.6-5.6z&quot;/&gt;&lt;/svg&gt;`;
+ let iconInfo = `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffff00&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2.5&quot; d=&quot;M12 6v8m.05 4v.1h-.1V18z&quot;/&gt;&lt;/svg&gt;`;
+ let iconWarning= `&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 512 512&quot;&gt;&lt;path fill=&quot;none&quot; stroke=&quot;#ffd43b&quot; stroke-linecap=&quot;round&quot; stroke-miterlimit=&quot;10&quot; stroke-width=&quot;15&quot; d=&quot;m381 340.1l-52.8-97.3l-51-94.2a24 24 0 0 0-42.4 0l-51 94.2l-52.8 97.3a24.3 24.3 0 0 0 21.2 35.9h207.7a24.2 24.2 0 0 0 21.1-35.9Z&quot;/&gt;&lt;path fill=&quot;#ffd43b&quot; d=&quot;M243 216.6q1.5-1.3 5.5-1.3h15.3c2.7 0 4.5.4 5.6 1.3s1.5 2.4 1.4 4.7l-3 71.8c-.1 2.3-.7 3.8-1.6 4.6s-2.7 1.3-5.4 1.3h-9.4c-2.6 0-4.4-.5-5.3-1.3s-1.5-2.3-1.6-4.6l-2.9-71.9c0-2.2.4-3.8 1.4-4.6m29 107.6q0 7-3 9.5c-2 1.8-5.6 2.7-11 2.7h-4c-5.4 0-9-1-11-2.6s-3-5-3-9.6v-2.9q0-7 3-9.6c2-1.7 5.6-2.5 11-2.5h4c5.4 0 9 .8 11 2.5s3 5 3 9.6Z&quot;/&gt;&lt;/svg&gt;`;
+/*]]&gt;*/
+  &lt;/script&gt;
+&lt;script&gt;
+   /*&lt;![CDATA[*/
+const _0x41c266=_0xf025;function _0x4c40(){const _0x40cf72=[&#039;resetEmail&#039;,&#039;Kode\x20dijalankan\x20karena\x20lisensi\x20valid.&#039;,&#039;pesan&#039;,&#039;classList&#039;,&#039;catch&#039;,&#039;remove&#039;,&#039;onclick&#039;,&#039;message&#039;,&#039;987678GjbfzR&#039;,&#039;getElementById&#039;,&#039;submit&#039;,&#039;judul&#039;,&#039;2817822mxlzSQ&#039;,&#039;notif-container\x20success&#039;,&#039;680110XmpSZd&#039;,&#039;notifCancel&#039;,&#039;notifConfirm&#039;,&#039;log&#039;,&#039;add&#039;,&#039;1250091mFYGDP&#039;,&#039;notifIcon&#039;,&#039;3492990JMQvir&#039;,&#039;konfirmasiresetpass&#039;,&#039;notifTitle&#039;,&#039;className&#039;,&#039;resetPasswordForm&#039;,&#039;notif-container\x20error&#039;,&#039;success&#039;,&#039;notif-container\x20warning&#039;,&#039;sendPasswordResetEmail&#039;,&#039;hiddenresetpassword_notif&#039;,&#039;textContent&#039;,&#039;notifText&#039;,&#039;cancel\x20reset\x20password&#039;,&#039;3WbdpDU&#039;,&#039;warning&#039;,&#039;8sNGsYP&#039;,&#039;111537gCKJLt&#039;,&#039;mengirimResetpass&#039;,&#039;preventDefault&#039;,&#039;innerHTML&#039;,&#039;value&#039;,&#039;271340HqVELv&#039;,&#039;notifContainer&#039;,&#039;20TggrTu&#039;];_0x4c40=function(){return _0x40cf72;};return _0x4c40();}(function(_0x487046,_0x5daf2){const _0x286621=_0xf025,_0x3046e1=_0x487046();while(!![]){try{const _0x579860=-parseInt(_0x286621(0xd6))/0x1+-parseInt(_0x286621(0xec))/0x2*(-parseInt(_0x286621(0x100))/0x3)+-parseInt(_0x286621(0xdb))/0x4*(parseInt(_0x286621(0xdd))/0x5)+parseInt(_0x286621(0xe6))/0x6+-parseInt(_0x286621(0xea))/0x7+parseInt(_0x286621(0x102))/0x8*(parseInt(_0x286621(0xf1))/0x9)+parseInt(_0x286621(0xf3))/0xa;if(_0x579860===_0x5daf2)break;else _0x3046e1[&#039;push&#039;](_0x3046e1[&#039;shift&#039;]());}catch(_0x407835){_0x3046e1[&#039;push&#039;](_0x3046e1[&#039;shift&#039;]());}}}(_0x4c40,0x32a53),document[_0x41c266(0xe7)](_0x41c266(0xf7))[&#039;addEventListener&#039;](_0x41c266(0xe8),function(_0x349a85){const _0x2f542b=_0x41c266;_0x349a85[_0x2f542b(0xd8)](),checkLisensi_hr(cur_blog_id_hr,function(_0x2b9ced){const _0x288cf1=_0x2f542b;_0x2b9ced&amp;&amp;(resetPassword_hr(),console[&#039;log&#039;](_0x288cf1(0xdf)));});}));function resetPassword_hr(){const _0x177065=_0x41c266,_0x4e9a50=document[_0x177065(0xe7)](_0x177065(0xde))[_0x177065(0xda)];showNoti_resetpassword(&#039;warning&#039;,pesanNotifresetpass[&#039;konfirmasiresetpass&#039;][_0x177065(0xe9)],pesanNotifresetpass[_0x177065(0xf4)][_0x177065(0xe0)]+&#039;:\x20&#039;+_0x4e9a50,!![],()=&gt;{const _0x2476d5=_0x177065;auth[_0x2476d5(0xfb)](_0x4e9a50)[&#039;then&#039;](()=&gt;{const _0x6569c3=_0x2476d5;showSweetAlertResetpass(pesanNotifresetpass[_0x6569c3(0xd7)][_0x6569c3(0xe9)],pesanNotifresetpass[&#039;mengirimResetpass&#039;][&#039;pesan&#039;],_0x6569c3(0xf9));})[_0x2476d5(0xe2)](_0x223b0b=&gt;{const _0x373458=_0x2476d5;showSweetAlertResetpass(&#039;&#039;+pesanNotifresetpass[&#039;errorResetpass&#039;][_0x373458(0xe9)],pesanNotifresetpass[&#039;errorResetpass&#039;][_0x373458(0xe0)]+&#039;:\x20&#039;+_0x223b0b[_0x373458(0xe5)],&#039;error&#039;);});},()=&gt;{const _0x4c978c=_0x177065;console[_0x4c978c(0xef)](_0x4c978c(0xff));});}function showSweetAlertResetpass(_0x12f254,_0x5c7bc9,_0x385ccc){showNoti_resetpassword(_0x385ccc,_0x12f254,_0x5c7bc9,![]);}function _0xf025(_0x2094c6,_0xf5b8ba){const _0x4c40e6=_0x4c40();return _0xf025=function(_0xf0259c,_0x247ca6){_0xf0259c=_0xf0259c-0xd6;let _0xc5821b=_0x4c40e6[_0xf0259c];return _0xc5821b;},_0xf025(_0x2094c6,_0xf5b8ba);}function showNoti_resetpassword(_0x2b30b6,_0x31a03f,_0x34ef5b,_0x281637=![],_0x92bb31=null,_0x9d36b1=null){const _0x4f25e8=_0x41c266,_0x2bdbcf=document[&#039;getElementById&#039;](_0x4f25e8(0xdc)),_0xa36397=document[_0x4f25e8(0xe7)](_0x4f25e8(0xf2)),_0x5c52a7=document[_0x4f25e8(0xe7)](_0x4f25e8(0xf5)),_0x55ccbd=document[_0x4f25e8(0xe7)](_0x4f25e8(0xfe)),_0x17e792=document[_0x4f25e8(0xe7)](_0x4f25e8(0xee)),_0x112302=document[_0x4f25e8(0xe7)](_0x4f25e8(0xed));switch(_0x2b30b6){case&#039;success&#039;:_0xa36397[_0x4f25e8(0xd9)]=iconSukses,_0x2bdbcf[_0x4f25e8(0xf6)]=_0x4f25e8(0xeb);break;case&#039;error&#039;:_0xa36397[_0x4f25e8(0xd9)]=iconGagal,_0x2bdbcf[&#039;className&#039;]=_0x4f25e8(0xf8);break;case _0x4f25e8(0x101):_0xa36397[_0x4f25e8(0xd9)]=iconWarning,_0x2bdbcf[&#039;className&#039;]=_0x4f25e8(0xfa);break;default:_0xa36397[_0x4f25e8(0xd9)]=iconInfo,_0x2bdbcf[_0x4f25e8(0xf6)]=&#039;notif-container\x20info&#039;;break;}_0x5c52a7[_0x4f25e8(0xfd)]=_0x31a03f,_0x55ccbd[&#039;textContent&#039;]=_0x34ef5b,_0x281637?_0x112302[_0x4f25e8(0xe1)][_0x4f25e8(0xe3)](&#039;hiddenresetpassword_notif&#039;):_0x112302[&#039;classList&#039;][_0x4f25e8(0xf0)](_0x4f25e8(0xfc)),_0x2bdbcf[&#039;classList&#039;][_0x4f25e8(0xe3)](_0x4f25e8(0xfc)),_0x17e792[_0x4f25e8(0xe4)]=()=&gt;{const _0x1e4dff=_0x4f25e8;_0x2bdbcf[_0x1e4dff(0xe1)][_0x1e4dff(0xf0)](&#039;hiddenresetpassword_notif&#039;);if(_0x92bb31)_0x92bb31();},_0x112302[&#039;onclick&#039;]=()=&gt;{const _0x1d4179=_0x4f25e8;_0x2bdbcf[_0x1d4179(0xe1)][_0x1d4179(0xf0)](_0x1d4179(0xfc));if(_0x9d36b1)_0x9d36b1();},!_0x281637&amp;&amp;setTimeout(()=&gt;{const _0x45ab36=_0x4f25e8;_0x2bdbcf[_0x45ab36(0xe1)][_0x45ab36(0xf0)](_0x45ab36(0xfc));},0x1388);}
+   /*]]&gt;*/
+   &lt;/script&gt;
+</code></pre>
+<hr/><br/>
+<b>Lock kontent</b>
+<p>Kode ini buat mengunci kontent kalian, bagian javascript harap diletakan diatas &lt;/body&gt;</p>
+<p>dan untuk bagian html silahkan letakan dipost lalu ganti idpost dan roleKT dengan id post dan role kontent tersebut yang kamu buat didasboard</p>
+<br/>
+<p>letakan dipostingan Chapter</p>
+<pre><code class="html">
+&lt;div idpost=&quot;Id post disini&quot; roleKT=&quot;Role disini&quot; class=&quot;premiumK&quot;&gt;&lt;/div&gt;
+</code></pre>
+<br/>
+<p>Letakan diatas &lt;/body&gt;</p>
+<pre><code class="javascript">
+ &lt;script&gt;
+/*&lt;![CDATA[*/
+// Lisensi for protect code.
+const lisensi_hr = [
+  {
+    lisensi: &#039;DAgGFB8cDBACAC0RBRUVCgQLAQ0BGwc=&#039;,
+    ownerLisensi: &#039;Hirutshuji&#039;,
+  }
+];
+
+var locknologin = &#039;&lt;div class=&quot;warning&quot;&gt;Konten terkunci. Harap masuk untuk melihat konten ini.&lt;/div&gt;&#039;;
+   
+ var lockKontent = &#039;&lt;div class=&quot;warning&quot;&gt;Tidak ada konten yang tersedia atau akses tidak diberikan oleh admin.&lt;/div&gt;&#039;;
+    
+var loaderKontent = &#039;Loading...&#039;;
+    
+    
+function aksesrole(userRole, aksesKontent) {
+      const ijinrole = {
+        &quot;Admin&quot;: [&quot;Admin&quot;,&quot;Member&quot;, &quot;User&quot;],
+        &quot;Member&quot;: [&quot;Member&quot;, &quot;User&quot;],
+        &quot;User&quot;: [&quot;User&quot;],
+      };
+return ijinrole[userRole].includes(aksesKontent);
+    }
+    
+let hariWrn = 2; //peringatan membership akan habis dalam 2 hari lagi
+
+let notifwrn_membership = &quot;Membership Anda akan habis dalam {hari} hari lagi.&quot;;
+
+let notifwrn_membership_habis1 = &quot;Membership Anda habis besok hari.&quot;;
+
+let notifwrn_membership_habis2 = &quot;Membership kamu telah habis.&quot;;
+
+function showntf(message, autoClose, closeTime = 5000) {
+  const notifDiv = document.createElement(&quot;div&quot;);
+  notifDiv.innerHTML = `
+    &lt;div style=&quot;position: fixed; top: 10px; right: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; padding: 10px; z-index: 99999999;&quot;&gt;
+      &lt;p&gt;${message}&lt;/p&gt;
+      &lt;a href=&quot;#&quot; style=&quot;border:none;&quot; onclick=&quot;this.parentElement.style.display=&#039;none&#039;;&quot;&gt;Tutup&lt;/a&gt;
+    &lt;/div&gt;
+  `;
+  document.body.appendChild(notifDiv);
+  if (autoClose) {
+    setTimeout(() =&gt; {
+      notifDiv.style.display = &#039;none&#039;;
+    }, closeTime);
+  }
+}
+ /*]]&gt;*/
+&lt;/script&gt;
+    &lt;script src=&#039;https://cdn.jsdelivr.net/gh/MagicReincarnation/codeHirutshuji@main/codebyhirutshuji_lite/logincode_litex_v4.0.js&#039;/&gt;  
+ &lt;script src=&#039;https://cdn.jsdelivr.net/gh/MagicReincarnation/codeHirutshuji@main/codebyhirutshuji_lite/lisensiCodeLogin_lite.js&#039;/&gt; 
+</code></pre>
+<br/>
+<hr/>
+<b>Dasboard Kontent</b>
+<p>Letakan juga dihalaman blog, tapi ingat jangan sampai ketahuan orang lain</p>
+<pre><code class="javascript">
+&lt;style&gt;
+    .toast {
+      display: inline-block;
+      padding: 20px;
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 10px;
+      color: #fff;
+      background-color: #333;
+      max-width: 500px;
+      margin: 10px auto;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .toast--pending {
+      background-color: #f0ad4e;
+    }
+
+    .toast--success {
+      background-color: #5bc0de;
+    }
+
+    .toast--error {
+      background-color: #d9534f;
+    }
+
+    .toast__close {
+      cursor: pointer;
+    }
+    
+    .toast__close svg {
+      width: 15px;
+      height: 15px;
+      fill: #fff;
+    }
+    
+    #toast-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+    #edit-form {
+      display: none;
+      margin: 20px 0;
+    }      
+/* Form Styles */
+.cc_form {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: auto;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-group button {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-group button:hover {
+  background-color: #555;
+}
+
+#edit-form {
+  margin-top: 30px;
+  background-color: #222;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+#edit-form h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .cc_form {
+    padding: 15px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cc_form {
+    padding: 10px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 13px;
+  }
+}
+
+/* Table Styles */
+.ccTabel {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: auto;
+  overflow-x: auto;
+}
+
+#result-container {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#result-container th,
+#result-container td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+  white-space: nowrap;
+}
+
+#result-container th {
+  background-color: #333;
+  color: white;
+}
+
+#result-container td a {
+  color: #007BFF;
+  text-decoration: none;
+}
+
+#result-container td a:hover {
+  text-decoration: underline;
+}
+@media (max-width: 768px) {
+  .table-container table,
+  .table-container thead,
+  .table-container tbody,
+  .table-container th,
+  .table-container td,
+  .table-container tr {
+    display: block;
+  }
+
+  .table-container thead {
+    display: none;
+  }
+
+  .table-container tbody tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .table-container td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+
+  .table-container td:last-child {
+    border-bottom: none;
+  }
+
+  .table-container td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-transform: capitalize;
+    color: #333;
+  }
+
+  .table-container td button {
+    margin-right: 5px;
+    padding: 6px 12px;
+    font-size: 14px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .table-container td button:hover {
+    background-color: #555;
+  }
+}
+@media (min-width: 769px) {
+  .table-container td::before {
+    display: none;
+  }
+}
+&lt;/style&gt;  
+&lt;div id=&quot;toast-container&quot;&gt;&lt;/div&gt;  
+  &lt;div class=&quot;cc_form&quot;&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;label for=&quot;postIdInput&quot;&gt;Post ID&lt;/label&gt;
+    &lt;input type=&quot;number&quot; id=&quot;postIdInput&quot; class=&quot;form-control&quot; placeholder=&quot;Enter post ID...&quot; required&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;label for=&quot;titleInput&quot;&gt;Title&lt;/label&gt;
+    &lt;input type=&quot;text&quot; id=&quot;titleInput&quot; class=&quot;form-control&quot; placeholder=&quot;Enter title...&quot;&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;label for=&quot;linkInput&quot;&gt;Link&lt;/label&gt;
+    &lt;input type=&quot;text&quot; id=&quot;linkInput&quot; class=&quot;form-control&quot; placeholder=&quot;Enter link...&quot;&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;label for=&quot;contentInput&quot;&gt;Content&lt;/label&gt;
+    &lt;textarea id=&quot;contentInput&quot; class=&quot;form-control&quot; rows=&quot;10&quot; placeholder=&quot;Enter content...&quot; required&gt;&lt;/textarea&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;label for=&quot;roleSelect&quot;&gt;Role&lt;/label&gt;
+    &lt;select id=&quot;roleSelect&quot; class=&quot;form-control&quot;&gt;
+      &lt;option value=&quot;Member&quot;&gt;Member&lt;/option&gt;
+      &lt;option value=&quot;User&quot;&gt;User&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;form-group&quot;&gt;
+    &lt;button onclick=&quot;saveContent()&quot;&gt;Save Content&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id=&quot;edit-form&quot;&gt;
+    &lt;h2&gt;Edit Content&lt;/h2&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;label for=&quot;editPostIdInput&quot;&gt;Post ID&lt;/label&gt;
+      &lt;input type=&quot;number&quot; id=&quot;editPostIdInput&quot; class=&quot;form-control&quot; placeholder=&quot;Post ID&quot; required&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;label for=&quot;editTitleInput&quot;&gt;Title&lt;/label&gt;
+      &lt;input type=&quot;text&quot; id=&quot;editTitleInput&quot; class=&quot;form-control&quot; placeholder=&quot;Title&quot;&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;label for=&quot;editLinkInput&quot;&gt;Link&lt;/label&gt;
+      &lt;input type=&quot;text&quot; id=&quot;editLinkInput&quot; class=&quot;form-control&quot; placeholder=&quot;Link&quot;&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;label for=&quot;editContentInput&quot;&gt;Content&lt;/label&gt;
+      &lt;textarea id=&quot;editContentInput&quot; class=&quot;form-control&quot; rows=&quot;10&quot; placeholder=&quot;Content&quot; required&gt;&lt;/textarea&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;label for=&quot;editRoleSelect&quot;&gt;Role&lt;/label&gt;
+      &lt;select id=&quot;editRoleSelect&quot; class=&quot;form-control&quot;&gt;
+        &lt;option value=&quot;Admin&quot;&gt;Admin&lt;/option&gt;
+        &lt;option value=&quot;Member&quot;&gt;Member&lt;/option&gt;
+        &lt;option value=&quot;User&quot;&gt;User&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;form-group&quot;&gt;
+      &lt;button onclick=&quot;updateContent()&quot;&gt;Update Content&lt;/button&gt;
+      &lt;button onclick=&quot;cancelEdit()&quot;&gt;Cancel&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;&lt;/div&gt;
+  &lt;h2&gt;Content List&lt;/h2&gt;
+  &lt;div class=&quot;ccTabel&quot;&gt;
+  &lt;table id=&quot;result-container&quot;&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Post ID&lt;/th&gt;
+        &lt;th&gt;Title&lt;/th&gt;
+        &lt;th&gt;Link&lt;/th&gt;
+        &lt;th&gt;Role&lt;/th&gt;
+        &lt;th&gt;Actions&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;&lt;/div&gt; 
+&lt;script&gt;
+function showToast(type, message) {
+      const container = document.getElementById(&#039;toast-container&#039;);
+      const toast = document.createElement(&#039;div&#039;);
+      toast.className = `toast toast--${type}`;
+      toast.innerHTML = `
+        &lt;span&gt;${message}&lt;/span&gt;
+      `;
+      container.appendChild(toast);
+      setTimeout(() =&gt; {
+        toast.style.transition = &#039;opacity 0.5s&#039;;
+        toast.style.opacity = &#039;0&#039;;
+        setTimeout(() =&gt; toast.remove(), 500);
+      }, 3000);
+    }
+function validatePassword(password) {
+  return password === &#039;HR05082024&#039;;
+}
+
+function _0x3969(){const _0x56b22a=[&#039;block&#039;,&#039;kontent&#039;,&#039;getElementById&#039;,&#039;appendChild&#039;,&#039;contentInput&#039;,&#039;title&#039;,&#039;set&#039;,&#039;editPostIdInput&#039;,&#039;\x22\x20href=\x22&#039;,&#039;677340ryUmBE&#039;,&#039;exists&#039;,&#039;ref&#039;,&#039;editRoleSelect&#039;,&#039;message&#039;,&#039;link&#039;,&#039;error&#039;,&#039;oldRole&#039;,&#039;Error\x20deleting\x20content:\x20&#039;,&#039;&lt;/td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;td&gt;&#039;,&#039;&lt;/td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;button\x20onclick=\x22editContent(\x27&#039;,&#039;Error\x20saving\x20content:\x20&#039;,&#039;innerHTML&#039;,&#039;2152759YSSHNc&#039;,&#039;922270LoIcmL&#039;,&#039;60AdlqQi&#039;,&#039;pending&#039;,&#039;success&#039;,&#039;linkInput&#039;,&#039;429516ZhMSuy&#039;,&#039;edit-form&#039;,&#039;60759ScMtyk&#039;,&#039;Content\x20saved\x20successfully!&#039;,&#039;72BCeYND&#039;,&#039;\x27,\x20\x27&#039;,&#039;Post\x20ID,\x20Title,\x20and\x20Link\x20are\x20required.&#039;,&#039;value&#039;,&#039;All\x20fields\x20are\x20required.&#039;,&#039;roleSelect&#039;,&#039;kontent/&#039;,&#039;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;td&gt;&#039;,&#039;Content\x20updated\x20successfully!&#039;,&#039;281132sOhGsz&#039;,&#039;\x27)\x22&gt;Edit&lt;/button&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;button\x20onclick=\x22deleteContent(\x27&#039;,&#039;8BMafNn&#039;,&#039;editContentInput&#039;,&#039;style&#039;,&#039;catch&#039;,&#039;remove&#039;,&#039;Saving\x20content...&#039;,&#039;key&#039;,&#039;val&#039;,&#039;&lt;/td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;td&gt;&lt;a\x20title=\x22&#039;,&#039;postIdInput&#039;,&#039;dataset&#039;,&#039;oldPostId&#039;,&#039;No\x20data\x20found\x20for\x20editing.&#039;,&#039;display&#039;,&#039;tbody&#039;,&#039;forEach&#039;,&#039;editLinkInput&#039;,&#039;Content\x20deleted\x20successfully!&#039;,&#039;then&#039;,&#039;once&#039;,&#039;6246eKeAAO&#039;,&#039;\x27)\x22&gt;Delete&lt;/button&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;/td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&#039;];_0x3969=function(){return _0x56b22a;};return _0x3969();}(function(_0x5f4e2d,_0xaebf81){const _0x9de19=_0x4e43,_0x27db80=_0x5f4e2d();while(!![]){try{const _0x3d68bc=-parseInt(_0x9de19(0x1e4))/0x1+parseInt(_0x9de19(0x1ae))/0x2+parseInt(_0x9de19(0x1c4))/0x3*(-parseInt(_0x9de19(0x1e6))/0x4)+parseInt(_0x9de19(0x1dd))/0x5+parseInt(_0x9de19(0x1e2))/0x6+parseInt(_0x9de19(0x1dc))/0x7*(parseInt(_0x9de19(0x1b0))/0x8)+-parseInt(_0x9de19(0x1cf))/0x9*(parseInt(_0x9de19(0x1de))/0xa);if(_0x3d68bc===_0xaebf81)break;else _0x27db80[&#039;push&#039;](_0x27db80[&#039;shift&#039;]());}catch(_0x32b0ac){_0x27db80[&#039;push&#039;](_0x27db80[&#039;shift&#039;]());}}}(_0x3969,0x25aec));function saveContent(){const _0x350825=_0x4e43,_0x55ee41=document[_0x350825(0x1c8)](_0x350825(0x1b9))[_0x350825(0x1e9)],_0xab11cf=document[_0x350825(0x1c8)](&#039;titleInput&#039;)[_0x350825(0x1e9)],_0x4fb9be=document[_0x350825(0x1c8)](_0x350825(0x1e1))[_0x350825(0x1e9)],_0x367fc6=document[_0x350825(0x1c8)](_0x350825(0x1ca))[_0x350825(0x1e9)],_0x455172=document[&#039;getElementById&#039;](_0x350825(0x1aa))[_0x350825(0x1e9)];if(!_0x55ee41||!_0xab11cf||!_0x4fb9be||!_0x367fc6){showToast(_0x350825(0x1d5),_0x350825(0x1a9));return;}showToast(_0x350825(0x1df),_0x350825(0x1b5));const _0x4e134d=dbrl[&#039;ref&#039;](_0x350825(0x1ab)+_0x55ee41+&#039;/&#039;+_0x455172);_0x4e134d[_0x350825(0x1cc)]({&#039;title&#039;:_0xab11cf,&#039;link&#039;:_0x4fb9be,&#039;kontent&#039;:_0x367fc6})[&#039;then&#039;](()=&gt;{const _0x4f36c6=_0x350825;showToast(_0x4f36c6(0x1e0),_0x4f36c6(0x1e5)),displayResult();})[_0x350825(0x1b3)](_0x26ca45=&gt;{const _0x5b4d35=_0x350825;showToast(&#039;error&#039;,_0x5b4d35(0x1da)+_0x26ca45[_0x5b4d35(0x1d3)]);});}function displayResult(){const _0x259e94=_0x4e43,_0x410cda=document[_0x259e94(0x1c8)](&#039;result-container&#039;)[&#039;getElementsByTagName&#039;](_0x259e94(0x1be))[0x0];_0x410cda[_0x259e94(0x1db)]=&#039;&#039;,dbrl[&#039;ref&#039;](_0x259e94(0x1c7))[_0x259e94(0x1c3)](_0x259e94(0x1e9))[&#039;then&#039;](_0x13c22b=&gt;{const _0x2d242d=_0x259e94;_0x13c22b[_0x2d242d(0x1bf)](_0xd3232=&gt;{const _0x13788c=_0x2d242d,_0xa3e9a0=_0xd3232[_0x13788c(0x1b6)];_0xd3232[&#039;forEach&#039;](_0x3ef0ae=&gt;{const _0x30f8e4=_0x13788c,_0x297223=_0x3ef0ae[_0x30f8e4(0x1b6)],_0x4e769c=_0x3ef0ae[_0x30f8e4(0x1b7)](),_0x3454b6=document[&#039;createElement&#039;](&#039;tr&#039;);_0x3454b6[_0x30f8e4(0x1db)]=_0x30f8e4(0x1ac)+_0xa3e9a0+_0x30f8e4(0x1d8)+(_0x4e769c[_0x30f8e4(0x1cb)]||&#039;&#039;)+_0x30f8e4(0x1b8)+(_0x4e769c[_0x30f8e4(0x1cb)]||&#039;&#039;)+_0x30f8e4(0x1ce)+(_0x4e769c[_0x30f8e4(0x1d4)]||&#039;&#039;)+&#039;\x22&gt;link&lt;/a&gt;&lt;/td&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;td&gt;&#039;+_0x297223+_0x30f8e4(0x1d9)+_0xa3e9a0+_0x30f8e4(0x1e7)+_0x297223+_0x30f8e4(0x1af)+_0xa3e9a0+&#039;\x27,\x20\x27&#039;+_0x297223+_0x30f8e4(0x1c5),_0x410cda[_0x30f8e4(0x1c9)](_0x3454b6);});});})[_0x259e94(0x1b3)](_0x50a201=&gt;{showToast(&#039;error&#039;,&#039;Error\x20fetching\x20content:\x20&#039;+_0x50a201[&#039;message&#039;]);});}function _0x4e43(_0x8b6589,_0x1fc692){const _0x39693d=_0x3969();return _0x4e43=function(_0x4e4327,_0x54cb34){_0x4e4327=_0x4e4327-0x1a9;let _0x3c0c41=_0x39693d[_0x4e4327];return _0x3c0c41;},_0x4e43(_0x8b6589,_0x1fc692);}function updateContent(){const _0x3b44e9=_0x4e43,_0x2f63e7=document[&#039;getElementById&#039;](&#039;editPostIdInput&#039;)[_0x3b44e9(0x1ba)][_0x3b44e9(0x1bb)],_0x1d8ce4=document[_0x3b44e9(0x1c8)](&#039;editRoleSelect&#039;)[_0x3b44e9(0x1ba)][&#039;oldRole&#039;],_0x3bd9b1=document[_0x3b44e9(0x1c8)](_0x3b44e9(0x1cd))[_0x3b44e9(0x1e9)],_0x2f0a7e=document[_0x3b44e9(0x1c8)](&#039;editTitleInput&#039;)[_0x3b44e9(0x1e9)],_0x3b273e=document[_0x3b44e9(0x1c8)](&#039;editLinkInput&#039;)[_0x3b44e9(0x1e9)],_0x190368=document[&#039;getElementById&#039;](&#039;editRoleSelect&#039;)[_0x3b44e9(0x1e9)];if(!_0x3bd9b1||!_0x2f0a7e||!_0x3b273e){showToast(_0x3b44e9(0x1d5),_0x3b44e9(0x1e8));return;}const _0x23be60=dbrl[_0x3b44e9(0x1d1)](_0x3b44e9(0x1ab)+_0x2f63e7+&#039;/&#039;+_0x1d8ce4);_0x23be60[_0x3b44e9(0x1b4)]()[_0x3b44e9(0x1c2)](()=&gt;{const _0x59a592=_0x3b44e9,_0x531dcb=dbrl[_0x59a592(0x1d1)](_0x59a592(0x1ab)+_0x3bd9b1+&#039;/&#039;+_0x190368);return _0x531dcb[_0x59a592(0x1cc)]({&#039;title&#039;:_0x2f0a7e,&#039;link&#039;:_0x3b273e,&#039;kontent&#039;:document[&#039;getElementById&#039;](_0x59a592(0x1b1))[&#039;value&#039;]});})[_0x3b44e9(0x1c2)](()=&gt;{const _0x576e8f=_0x3b44e9;showToast(_0x576e8f(0x1e0),_0x576e8f(0x1ad)),cancelEdit(),displayResult();})[&#039;catch&#039;](_0x4792f6=&gt;{const _0x1201ac=_0x3b44e9;showToast(_0x1201ac(0x1d5),&#039;Error\x20updating\x20content:\x20&#039;+_0x4792f6[_0x1201ac(0x1d3)]);});}function cancelEdit(){const _0x4ca602=_0x4e43;document[_0x4ca602(0x1c8)](_0x4ca602(0x1e3))[_0x4ca602(0x1b2)][_0x4ca602(0x1bd)]=&#039;none&#039;;}function editContent(_0x54f123,_0x38df3e){const _0x1967d4=_0x4e43,_0x3c6425=dbrl[_0x1967d4(0x1d1)](_0x1967d4(0x1ab)+_0x54f123+&#039;/&#039;+_0x38df3e);_0x3c6425[_0x1967d4(0x1c3)](&#039;value&#039;)[_0x1967d4(0x1c2)](_0x349158=&gt;{const _0x4e0d24=_0x1967d4;if(_0x349158[_0x4e0d24(0x1d0)]()){const _0x363af0=_0x349158[_0x4e0d24(0x1b7)]();document[_0x4e0d24(0x1c8)](_0x4e0d24(0x1cd))[_0x4e0d24(0x1e9)]=_0x54f123,document[_0x4e0d24(0x1c8)](&#039;editPostIdInput&#039;)[_0x4e0d24(0x1ba)][_0x4e0d24(0x1bb)]=_0x54f123,document[_0x4e0d24(0x1c8)](&#039;editRoleSelect&#039;)[_0x4e0d24(0x1e9)]=_0x38df3e,document[_0x4e0d24(0x1c8)](_0x4e0d24(0x1d2))[_0x4e0d24(0x1ba)][_0x4e0d24(0x1d6)]=_0x38df3e,document[_0x4e0d24(0x1c8)](&#039;editTitleInput&#039;)[_0x4e0d24(0x1e9)]=_0x363af0[_0x4e0d24(0x1cb)]||&#039;&#039;,document[&#039;getElementById&#039;](_0x4e0d24(0x1c0))[_0x4e0d24(0x1e9)]=_0x363af0[_0x4e0d24(0x1d4)]||&#039;&#039;,document[_0x4e0d24(0x1c8)](_0x4e0d24(0x1b1))[_0x4e0d24(0x1e9)]=_0x363af0[_0x4e0d24(0x1c7)]||&#039;&#039;,document[_0x4e0d24(0x1c8)](_0x4e0d24(0x1e3))[_0x4e0d24(0x1b2)][_0x4e0d24(0x1bd)]=_0x4e0d24(0x1c6);}else showToast(_0x4e0d24(0x1d5),_0x4e0d24(0x1bc));})[&#039;catch&#039;](_0xed02b9=&gt;{const _0x5c9b29=_0x1967d4;showToast(_0x5c9b29(0x1d5),&#039;Error\x20fetching\x20content\x20for\x20edit:\x20&#039;+_0xed02b9[_0x5c9b29(0x1d3)]);});}function deleteContent(_0x1e1347,_0x2fe636){const _0x4402ae=_0x4e43,_0x5c9a01=prompt(&#039;Please\x20enter\x20password\x20to\x20confirm\x20deletion:&#039;);if(validatePassword(_0x5c9a01)){const _0x7e318f=dbrl[_0x4402ae(0x1d1)](_0x4402ae(0x1ab)+_0x1e1347+&#039;/&#039;+_0x2fe636);_0x7e318f[_0x4402ae(0x1b4)]()[_0x4402ae(0x1c2)](()=&gt;{const _0x8196cb=_0x4402ae;showToast(&#039;success&#039;,_0x8196cb(0x1c1)),displayResult();})[_0x4402ae(0x1b3)](_0xdf0552=&gt;{const _0x5040ab=_0x4402ae;showToast(_0x5040ab(0x1d5),_0x5040ab(0x1d7)+_0xdf0552[&#039;message&#039;]);});}else showToast(_0x4402ae(0x1d5),&#039;Invalid\x20password.\x20Content\x20not\x20deleted.&#039;);}
+displayResult();
+  &lt;/script&gt;
+</code></pre>
+<br/>
+<b>Update(4.0): dasboard admin,letakan dihalaman</b>
+<pre><code class="html">
+&lt;style&gt;
+  :root {
+    --bg-datauser-dasboard: #1e2129;
+    --color-dasboard: #0c70de;
+    --color-text-dasboard: #fff;
+  }
+
+  .hidden1 { display: none; }
+
+  ul#user-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  ul#user-list li.usersub::before {
+    position: absolute;
+    top: -35px;
+    right: 0;
+    font-size: 14px;
+    border-radius: 5px;
+    padding: 3px 7px;
+    background: var(--color-dasboard);
+    color: var(--color-text-dasboard);
+    content: attr(index);
+  }
+
+  #user-list li {
+    position: relative;
+    margin: 55px 0 25px -20px;
+    background: var(--bg-datauser-dasboard);
+    color: var(--color-text-dasboard);
+    height: auto;
+    border-radius: 15px;
+    font-size: 16px;
+    float: left;
+  }
+
+  span.setting-user {
+    display: flex;
+    flex-direction: column;
+  }
+
+  span.setting-user &gt; span {
+    border: 1px solid var(--color-dasboard);
+    border-radius: 5px;
+    padding: 1px 10px;
+    margin: 3px;
+    overflow: hidden;
+  }
+
+  span.setting-user &gt; span:hover {
+    overflow: auto;
+  }
+
+  ul#user-list li button:first-child {
+    background: var(--color-dasboard);
+    color: var(--color-text-dasboard);
+    border: none;
+    border-radius: 5px;
+    right: -5px;
+    top: -25px;
+  }
+
+  ul#user-list li button:nth-child(2) {
+    background: #0000;
+    color: #fff;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    bottom: 13px;
+    right: 16px;
+  }
+
+  ul#user-list li button:nth-child(3) {
+    border: 1px solid var(--color-dasboard);
+    border-radius: 5px;
+    bottom: 0;
+    left: 0;
+  }
+
+  div#set1 {
+    display: flex;
+    padding: 5px;
+    margin: 5px;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  input#checkTanggal {
+    padding: 10px 15px;
+    background: #1e2129ba;
+    color: #fff;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+  }
+
+  input#checkTanggal::placeholder {
+    color: #fff;
+  }
+
+  span#inputset1 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #inputset1 button {
+    background: var(--color-dasboard);
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    padding: 6px 20px;
+    margin: 5px;
+  }
+
+  span#result_tanggal {
+    position: relative;
+    border-radius: 15px;
+    background: #1e2129ba;
+    color: #fff;
+    padding: 3px;
+    width: 50%;
+    min-height: 60px;
+    max-height: 100%;
+    margin: 5px;
+  }
+
+  span#result_tanggal:before {
+    content: &quot;Output &gt;&quot;;
+    position: absolute;
+    top: 0;
+    left: -80px;
+    background: #1e2129ba;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 16px;
+  }
+  .setting-dashboard {
+    display: flex;
+    padding: 5px;
+    margin: 5px;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  span.cariUser, .filterUser {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  input#search-input {
+    width: 100%;
+    padding: 10px 15px;
+    background: #1e2129ba;
+    color: #fff;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+  }
+
+  input#search-input::placeholder {
+    color: #fff;
+  }
+
+  .cariUser button {
+    background: var(--color-dasboard);
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    padding: 6px 20px;
+    margin: 5px;
+  }
+  div#pagination {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 3px;
+  }
+
+  div#pagination button {
+    padding: 5px 8px;
+    background: #0c70de;
+    border-radius: 5px;
+    border: none;
+    color: #fff;
+  }
+
+  div#page-numbers {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  div#page-numbers span {
+    margin: auto 5px;
+    border: none;
+    background: #0c70de;
+    color: #eee;
+    font-size: 16px;
+    border-radius: 5px;
+    padding: 3px 7px;
+  }
+
+  div#page-numbers span.current-page,
+  div#pagination button:hover,
+  div#page-numbers span:hover {
+    background: #ff9a00;
+    color: #1e2129;
+  }
+&lt;/style&gt;
+  &lt;div class=&quot;setting-dashboard&quot;&gt;
+    &lt;span class=&quot;cariUser&quot;&gt;
+      &lt;input type=&quot;text&quot; id=&quot;search-input&quot; placeholder=&quot;Cari berdasarkan UID&quot;/&gt;
+      &lt;button onclick=&quot;searchUsers()&quot;&gt;Cari User&lt;/button&gt;
+    &lt;/span&gt;
+    &lt;br/&gt;
+  &lt;/div&gt;
+
+&lt;hr/&gt;
+&lt;div id=&quot;admin-dashboard&quot;&gt;
+  &lt;ul id=&quot;user-list&quot;&gt;&lt;/ul&gt;
+&lt;/div&gt;
+ &lt;hr/&gt;
+&lt;div id=&quot;pagination&quot;&gt;
+    &lt;button onclick=&quot;loadPreviousPage()&quot;&gt;Prev&lt;/button&gt;
+    &lt;div id=&quot;page-numbers&quot;&gt;&lt;/div&gt;
+    &lt;button onclick=&quot;loadNextPage()&quot;&gt;Next&lt;/button&gt;
+  &lt;/div&gt;
+
+
+&lt;script&gt;
+  const perhalaman = 15;
+  function _0x48d4(_0x45442a,_0x42d7e4){const _0x3de2a1=_0x3de2();return _0x48d4=function(_0x48d4b6,_0x4ba678){_0x48d4b6=_0x48d4b6-0xe1;let _0x24320d=_0x3de2a1[_0x48d4b6];return _0x24320d;},_0x48d4(_0x45442a,_0x42d7e4);}const _0x4a5d92=_0x48d4;(function(_0x3b9fb8,_0x191415){const _0x33408e=_0x48d4,_0x58974d=_0x3b9fb8();while(!![]){try{const _0xa3ac1=-parseInt(_0x33408e(0xf3))/0x1*(-parseInt(_0x33408e(0x11f))/0x2)+-parseInt(_0x33408e(0xf6))/0x3+-parseInt(_0x33408e(0x10e))/0x4+-parseInt(_0x33408e(0x121))/0x5*(-parseInt(_0x33408e(0xfe))/0x6)+parseInt(_0x33408e(0x101))/0x7+parseInt(_0x33408e(0x11d))/0x8+parseInt(_0x33408e(0xe1))/0x9*(-parseInt(_0x33408e(0x119))/0xa);if(_0xa3ac1===_0x191415)break;else _0x58974d[&#039;push&#039;](_0x58974d[&#039;shift&#039;]());}catch(_0x4cb6ff){_0x58974d[&#039;push&#039;](_0x58974d[&#039;shift&#039;]());}}}(_0x3de2,0x51081));let currentPage=0x1;function setperhalaman(_0x17b9f6){perhalaman=_0x17b9f6,currentPage=0x1,loadUsers();}function loadUsers(){const _0x1a6666=_0x48d4,_0x2164d9=(currentPage-0x1)*perhalaman,_0x45358e=_0x2164d9+perhalaman;db[&#039;collection&#039;](&#039;users&#039;)[&#039;get&#039;]()[_0x1a6666(0x105)](_0x481f7a=&gt;{const _0xe310a7=_0x1a6666,_0x1558a8=[];_0x481f7a[_0xe310a7(0x11c)](_0x1298a0=&gt;{_0x1558a8[&#039;push&#039;]({&#039;id&#039;:_0x1298a0[&#039;id&#039;],..._0x1298a0[&#039;data&#039;]()});});const _0x1ed369=_0x1558a8[_0xe310a7(0x107)](_0x2164d9,_0x45358e);showUserList(_0x1ed369),displayPageNumbers(_0x1558a8[_0xe310a7(0xee)]);});}function _0x3de2(){const _0x2f2d43=[&#039;value&#039;,&#039;createElement&#039;,&#039;202926LoDPsK&#039;,&#039;Admin&#039;,&#039;textContent&#039;,&#039;1865241zbRjhK&#039;,&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22exp-role\x22&gt;Exp:\x20&#039;,&#039;numeric&#039;,&#039;setAttribute&#039;,&#039;then&#039;,&#039;email&#039;,&#039;slice&#039;,&#039;message&#039;,&#039;addEventListener&#039;,&#039;.editexp&#039;,&#039;Gagal\x20mengubah\x20Role\x20User:\x20&#039;,&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;summary&gt;Info\x20Role&lt;/summary&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;Hanya\x203\x20Role\x20yang\x20tersedia&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;1:\x20Admin\x20=\x20membuka\x20Konten\x20User\x20&amp;\x20Member\x20&amp;\x20Admin&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;2:\x20Member\x20=\x20membuka\x20Konten\x20User\x20&amp;\x20Member&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;3:\x20User\x20=\x20membuka\x20Konten\x20User&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;/details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;summary&gt;Info\x20Aturan\x20Exp\x20Role&lt;/summary&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;Hanya\x20Tanggal\x20angka\x20yang\x20diijinkan&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;1.\x20dd/mm/yyyy:\x20harus\x20wajib\x20dua\x20angka\x20seperti\x20ini\x20[01/01/2023]\x20Angka\x20satu\x20punya\x20angka\x20nol&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;2.\x20dd/mm/yyyy:\x20Dalam\x20Tanggal\x20kalian\x20tidak\x20boleh\x20memasukan\x20Huruf,\x20Hanya\x20angka\x20yang\x20diperbolehkan&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;3.\x20dd/mm/yyyy:\x20Kalian\x20juga\x20tidak\x20boleh\x20memasukan\x20WIB\x20karena\x20itu\x20otomatis\x20akan\x20ada\x20dengan\x20sendirinya&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;/details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22role-user\x22&gt;Role:\x20&#039;,&#039;role&#039;,&#039;2102108YOhRPd&#039;,&#039;exists&#039;,&#039;error&#039;,&#039;data&#039;,&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;summary&gt;Info\x20Status\x20Email?&lt;/summary&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;false\x20=\x20Belum\x20verifikasi\x20email\x20dan\x20belum\x20login\x20sama\x20sekali&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20&lt;p&gt;true\x20=\x20sudah\x20verifikasi\x20email\x20dan\x20sudah\x20login\x20sekali\x20(terdaftar)&lt;/p&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;/details&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22email-user\x22&gt;Email:\x20&#039;,&#039;split&#039;,&#039;toLowerCase&#039;,&#039;test&#039;,&#039;#page-numbers&#039;,&#039;Masukkan\x20tanggal\x20Exp\x20membership:\x20contoh\x20(30/12/2023)\x20tanpa\x20WIB:&#039;,&#039;#user-list&#039;,&#039;2890Hjollm&#039;,&#039;classList&#039;,&#039;getTime&#039;,&#039;forEach&#039;,&#039;4793624mwJqBO&#039;,&#039;Masukkan\x20Role\x20baru\x20untuk\x20User:&#039;,&#039;478cSlzSt&#039;,&#039;Asia/Jakarta&#039;,&#039;35DaJdzZ&#039;,&#039;collection&#039;,&#039;Format\x20tanggal\x20tidak\x20valid.\x20Gunakan\x20format\x20dd/mm/yyyy.&#039;,&#039;appendChild&#039;,&#039;querySelector&#039;,&#039;index&#039;,&#039;catch&#039;,&#039;Error\x20getting\x20user\x20data:&#039;,&#039;774VAhIll&#039;,&#039;users&#039;,&#039;includes&#039;,&#039;map&#039;,&#039;toLocaleDateString&#039;,&#039;filter&#039;,&#039;add&#039;,&#039;innerHTML&#039;,&#039;Gagal\x20mengambil\x20data\x20User:\x20&#039;,&#039;get&#039;,&#039;usersub&#039;,&#039;Error\x20getting\x20users:&#039;,&#039;current-page&#039;,&#039;length&#039;,&#039;Role\x20User\x20berhasil\x20diubah.&#039;,&#039;update&#039;,&#039;doc&#039;,&#039;\x0a\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22setting-user\x22&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20id=\x22uidcheck\x22\x20class=\x22username-user\x22&gt;Uid:\x20&#039;,&#039;79mRaoSj&#039;,&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22email-status\x22&gt;Status\x20Email:\x20&#039;,&#039;click&#039;,&#039;717024WfACYM&#039;,&#039;2-digit&#039;,&#039;span&#039;,&#039;#search-input&#039;,&#039;short&#039;,&#039;exp&#039;];_0x3de2=function(){return _0x2f2d43;};return _0x3de2();}function loadPreviousPage(){currentPage&gt;0x1&amp;&amp;(currentPage--,loadUsers());}function loadNextPage(){currentPage++,loadUsers();}function displayPageNumbers(_0x3228f2){const _0x3b677c=_0x48d4,_0x552cd4=Math[&#039;ceil&#039;](_0x3228f2/perhalaman),_0x3d4e54=document[_0x3b677c(0x125)](_0x3b677c(0x116));_0x3d4e54[&#039;innerHTML&#039;]=&#039;&#039;;for(let _0x13f784=0x1;_0x13f784&lt;=_0x552cd4;_0x13f784++){const _0x358d3f=document[_0x3b677c(0xfd)](_0x3b677c(0xf8));_0x358d3f[_0x3b677c(0x100)]=_0x13f784,_0x13f784===currentPage&amp;&amp;_0x358d3f[_0x3b677c(0x11a)][_0x3b677c(0xe7)](_0x3b677c(0xed)),_0x358d3f[_0x3b677c(0x109)](_0x3b677c(0xf5),()=&gt;{currentPage=_0x13f784,loadUsers();}),_0x3d4e54[_0x3b677c(0x124)](_0x358d3f);}}function ExpRoleuser(_0x54ad62,_0xe99a44){const _0x4fc6ff=_0x48d4;if(!/^(\d{2})\/(\d{2})\/(\d{4})$/[_0x4fc6ff(0x115)](_0xe99a44)){alert(&#039;Format\x20tanggal\x20tidak\x20valid.\x20Gunakan\x20format\x20dd/mm/yyyy.&#039;);return;}db[_0x4fc6ff(0x122)](&#039;users&#039;)[_0x4fc6ff(0xf1)](_0x54ad62)[_0x4fc6ff(0xea)]()[_0x4fc6ff(0x105)](_0x4e64ae=&gt;{const _0x2fc6f0=_0x4fc6ff;if(_0x4e64ae[_0x2fc6f0(0x10f)]){const _0x2e09da=_0x4e64ae[_0x2fc6f0(0x111)]();if(_0x2e09da[_0x2fc6f0(0x10d)]===&#039;Admin&#039;){alert(&#039;Tidak\x20diizinkan\x20mengubah\x20tanggal\x20Exp\x20pada\x20user\x20dengan\x20Role\x20Admin.&#039;);return;}const [_0x144cd4,_0x5cc11e,_0x284c61]=_0xe99a44[_0x2fc6f0(0x113)](&#039;/&#039;)[_0x2fc6f0(0xe4)](Number),_0x6e161a=new Date(_0x284c61,_0x5cc11e-0x1,_0x144cd4);if(isNaN(_0x6e161a[_0x2fc6f0(0x11b)]())){alert(_0x2fc6f0(0x123));return;}const _0xa1ed06=_0x6e161a[_0x2fc6f0(0xe5)](&#039;id-ID&#039;,{&#039;timeZone&#039;:_0x2fc6f0(0x120),&#039;day&#039;:_0x2fc6f0(0xf7),&#039;month&#039;:_0x2fc6f0(0xf7),&#039;year&#039;:_0x2fc6f0(0x103),&#039;timeZoneName&#039;:_0x2fc6f0(0xfa)});db[&#039;collection&#039;](_0x2fc6f0(0xe2))[_0x2fc6f0(0xf1)](_0x54ad62)[_0x2fc6f0(0xf0)]({&#039;exp&#039;:_0xa1ed06})[_0x2fc6f0(0x105)](()=&gt;{alert(&#039;Tanggal\x20Exp\x20Role\x20User\x20berhasil\x20diubah.&#039;),loadUsers();})[_0x2fc6f0(0x127)](_0x51d495=&gt;{const _0x430b8e=_0x2fc6f0;alert(&#039;Gagal\x20mengubah\x20Tanggal\x20Exp\x20Role\x20User:\x20&#039;+_0x51d495[_0x430b8e(0x108)]);});}})[_0x4fc6ff(0x127)](_0x1f698c=&gt;{const _0x13a27a=_0x4fc6ff;console[_0x13a27a(0x110)](_0x13a27a(0x128),_0x1f698c);});}function changeUserRole(_0x1bb417,_0x45877b){const _0x715d89=_0x48d4;db[_0x715d89(0x122)](_0x715d89(0xe2))[_0x715d89(0xf1)](_0x1bb417)[_0x715d89(0xea)]()[_0x715d89(0x105)](_0x237143=&gt;{const _0x2840e6=_0x715d89;if(_0x237143[_0x2840e6(0x10f)]){const _0xa26ef2=_0x237143[_0x2840e6(0x111)]();if(_0xa26ef2[_0x2840e6(0x10d)]===_0x2840e6(0xff)){alert(&#039;Tidak\x20diizinkan\x20mengubah\x20User\x20dengan\x20Role\x20Admin.&#039;);return;}db[_0x2840e6(0x122)](&#039;users&#039;)[_0x2840e6(0xf1)](_0x1bb417)[&#039;update&#039;]({&#039;role&#039;:_0x45877b})[_0x2840e6(0x105)](()=&gt;{const _0x40bca4=_0x2840e6;alert(_0x40bca4(0xef)),loadUsers();})[_0x2840e6(0x127)](_0x31397b=&gt;{const _0x2bf98d=_0x2840e6;alert(_0x2bf98d(0x10b)+_0x31397b[&#039;message&#039;]);});}})[&#039;catch&#039;](_0x452c0c=&gt;{const _0x59f728=_0x715d89;alert(_0x59f728(0xe9)+_0x452c0c[_0x59f728(0x108)]);});}function showUserList(_0x499ba4){const _0x2c9e3c=_0x48d4,_0xbb6114=document[_0x2c9e3c(0x125)](_0x2c9e3c(0x118));_0xbb6114[_0x2c9e3c(0xe8)]=&#039;&#039;,_0x499ba4[_0x2c9e3c(0x11c)]((_0x46fbb7,_0x3cca69)=&gt;{const _0x35f61a=_0x2c9e3c,_0x3c80b1=document[_0x35f61a(0xfd)](&#039;li&#039;);_0x3c80b1[_0x35f61a(0x11a)][_0x35f61a(0xe7)](_0x35f61a(0xeb)),_0x3c80b1[_0x35f61a(0x104)](_0x35f61a(0x126),_0x3cca69+0x1),_0x3c80b1[&#039;innerHTML&#039;]=_0x35f61a(0xf2)+_0x46fbb7[&#039;id&#039;]+&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22username-user\x22&gt;Nama:\x20&#039;+_0x46fbb7[&#039;username&#039;]+_0x35f61a(0x112)+_0x46fbb7[_0x35f61a(0x106)]+_0x35f61a(0xf4)+_0x46fbb7[&#039;emailVerified&#039;]+_0x35f61a(0x10c)+_0x46fbb7[&#039;role&#039;]+_0x35f61a(0x102)+_0x46fbb7[_0x35f61a(0xfb)]+&#039;&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20&lt;/span&gt;\x0a\x20\x20\x20\x20\x20\x20&lt;span\x20class=\x22btn-edit\x22&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;button\x20class=\x22editrole\x22&gt;Edit\x20Role&lt;/button&gt;\x0a\x20\x20\x20\x20\x20\x20\x20\x20&lt;button\x20class=\x22editexp\x22&gt;Edit\x20Tanggal\x20Exp&lt;/button&gt;\x0a\x20\x20\x20\x20\x20\x20&lt;/span&gt;\x0a\x20\x20\x20\x20&#039;,_0x3c80b1[_0x35f61a(0x125)](&#039;.editrole&#039;)[_0x35f61a(0x109)](_0x35f61a(0xf5),()=&gt;{const _0x59a556=_0x35f61a,_0x323234=prompt(_0x59a556(0x11e));_0x323234&amp;&amp;changeUserRole(_0x46fbb7[&#039;id&#039;],_0x323234);}),_0x3c80b1[_0x35f61a(0x125)](_0x35f61a(0x10a))[_0x35f61a(0x109)](_0x35f61a(0xf5),()=&gt;{const _0x4d7259=_0x35f61a,_0x3f950a=prompt(_0x4d7259(0x117));_0x3f950a&amp;&amp;ExpRoleuser(_0x46fbb7[&#039;id&#039;],_0x3f950a);}),_0xbb6114[_0x35f61a(0x124)](_0x3c80b1);});}function searchUsers(){const _0x57b12b=_0x48d4,_0x5cbbcb=document[_0x57b12b(0x125)](_0x57b12b(0xf9))[_0x57b12b(0xfc)][_0x57b12b(0x114)]();db[_0x57b12b(0x122)](_0x57b12b(0xe2))[_0x57b12b(0xea)]()[_0x57b12b(0x105)](_0x33c15c=&gt;{const _0x439631=_0x57b12b,_0x50dd64=[];_0x33c15c[&#039;forEach&#039;](_0x370bba=&gt;{const _0x2b26e7=_0x48d4;_0x50dd64[&#039;push&#039;]({&#039;id&#039;:_0x370bba[&#039;id&#039;],..._0x370bba[_0x2b26e7(0x111)]()});});const _0x2a74d8=_0x50dd64[_0x439631(0xe6)](_0x317cd5=&gt;_0x317cd5[&#039;id&#039;][_0x439631(0x114)]()[_0x439631(0xe3)](_0x5cbbcb));showUserList(_0x2a74d8),displayPageNumbers(_0x2a74d8[&#039;length&#039;]);})[&#039;catch&#039;](_0x3a1ab9=&gt;{const _0x55c061=_0x57b12b;console[_0x55c061(0x110)](_0x55c061(0xec),_0x3a1ab9);});}document[_0x4a5d92(0x109)](&#039;DOMContentLoaded&#039;,()=&gt;{loadUsers();});
+  &lt;/script&gt;
+</code></pre>
+<div class="alert alert-dark" role="alert">
+<b>Semoga berhasil</b>
+<p>Maaf jika kodenya tidak reponsif atau style kurang bagus, aku membuat kode ini hanya pakai ponsel, jadi reponsif hanya diponsel tidak dilaptop</p>
+<p>Jika kalian bisa membuat stylenya sendiri dan mau membagikan stylenya silahkan hubungi admin digroup, imbalannya bisa kuberikan kode tanpa encrypt</p>
+</div>
+
+<p>bingung cara pasangnya?</p>
+<p>tanya admin langsung, ke group/komen aja dibawah </p>
+<a class="btn info" href="https://t.me/webhiru" target="_blank">Group Telegram</a>
+
+
+</div>
