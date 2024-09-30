@@ -10,7 +10,7 @@
     "lisensi_0": "XOREncryptedDomain2",
     "lisensi_1": "XOREncryptedBlogID2",
     "pswd": "XOREncryptedPassword2"
-  }
+  },
   "3": {
   "blogID": "12345678910",
   "lisensi_0": "DAgGFFpdV1FdXxocXBddXVRHRVkcRxEaXA==",
