@@ -1,0 +1,20 @@
+{
+  "1": { 
+    "blogID": "123456jl7890",
+    "lisensi_0": "XOREncryptedDomain1",
+    "lisensi_1": "XOREncryptedBlogID1",
+    "pswd": "XOREncryptedPassword1"
+  },
+  "2": { 
+    "blogID": "0987654321",
+    "lisensi_0": "XOREncryptedDomain2",
+    "lisensi_1": "XOREncryptedBlogID2",
+    "pswd": "XOREncryptedPassword2"
+  }
+  "3": {
+  "blogID": "12345678910",
+  "lisensi_0": "DAgGFFpdV1FdXxocXBddXVRHRVkcRxEaXA==",
+  "lisensi_1": "WVtBQQQEBAwMB1g=",
+  "pswd": "AAAAAEVBW0FfXw=="
+  }
+}
